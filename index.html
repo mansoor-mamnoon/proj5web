@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CS 180 Project 5A – Diffusion Models</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 20px; }
+    h1, h2, h3 { font-weight: 600; }
+    img { max-width: 100%; height: auto; border-radius: 8px; }
+    .img-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .img-col { flex: 1 1 250px; text-align: center; }
+    .caption { font-size: 0.9rem; color: #555; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>CS 180 Project 5A – Diffusion Models</h1>
+  <p><strong>Name:</strong> Mansoor Mamnoon</p>
+  <p><strong>Random Seed:</strong> 180</p>
+
+  <h2>Part 0: Playing with DeepFloyd IF</h2>
+
+  <p>
+    I used the DeepFloyd IF two-stage diffusion model via Hugging Face. I generated my own
+    prompt embeddings using the provided Hugging Face cluster, then loaded the resulting
+    <code>prompt_embeds_dict.pth</code> file into my environment. For all experiments below,
+    I fixed the random seed to <code>180</code> for reproducibility.
+  </p>
+
+  <h3>Prompts</h3>
+  <ol>
+    <li>"A giant mechanical peacock made of bronze gears and stained glass, opening its tail in the middle of Times Square at night."</li>
+    <li>"A Victorian-era astronaut reading a book inside a candle-lit library on the moon."</li>
+    <li>"A warm, cozy cottage made out of chocolate and gingerbread, with smoke shaped like cinnamon rolls drifting from the chimney."</li>
+  </ol>
+
+  <h3>Generated Images (Stage II, 256×256, 20 steps)</h3>
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/peacock_20.png" alt="Mechanical peacock, 20 steps">
+      <div class="caption">Prompt 1 – 20 denoising steps</div>
+    </div>
+    <div class="img-col">
+      <img src="img/astronaut_20.png" alt="Victorian-era astronaut, 20 steps">
+      <div class="caption">Prompt 2 – 20 denoising steps</div>
+    </div>
+    <div class="img-col">
+      <img src="img/cottage_20.png" alt="Chocolate gingerbread cottage, 20 steps">
+      <div class="caption">Prompt 3 – 20 denoising steps</div>
+    </div>
+  </div>
+
+  <h3>Reflection on Image Quality and Alignment</h3>
+
+  <p><strong>Prompt 1 – Mechanical peacock in Times Square.</strong>
+    The model produces a very vibrant peacock with a stained-glass-like tail and metallic-looking body,
+    which matches the “mechanical” and “stained glass” parts of the prompt well. In the 256×256 image,
+    the background has bright lights and tall buildings that resemble Times Square at night.
+    The overall composition is coherent, but some of the gear details in the feathers are abstract
+    rather than clearly defined gears.
+  </p>
+
+  <p><strong>Prompt 2 – Victorian-era astronaut in a candle-lit library on the moon.</strong>
+    The image shows a figure in an old-fashioned uniform reading a large book in front of floor-to-ceiling shelves.
+    The warm directional light fits the “candle-lit” setting. A planet visible through the window
+    suggests a lunar location. The model captures the mood of a Victorian library well, but the “astronaut”
+    concept is stylized and does not look like a modern spacesuit.
+  </p>
+
+  <p><strong>Prompt 3 – Chocolate and gingerbread cottage with cinnamon-roll smoke.</strong>
+    The cottage clearly looks like a gingerbread house: the walls and roof have cookie and icing textures,
+    and there are candy-like decorations and trees. The scene feels warm and cozy despite the snow.
+    The smoke from the chimney has a slight spiral structure, but it does not perfectly form distinct
+    cinnamon-roll shapes. Overall, the model is strong at the “dessert house” concept, but struggles with
+    this very specific geometric detail.
+  </p>
+
+  <h3>Effect of <code>num_inference_steps</code> (Prompt 1)</h3>
+
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/peacock_10steps.png" alt="Peacock, 10 steps">
+      <div class="caption">Prompt 1 – 10 denoising steps</div>
+    </div>
+    <div class="img-col">
+      <img src="img/peacock_50steps.png" alt="Peacock, 50 steps">
+      <div class="caption">Prompt 1 – 50 denoising steps</div>
+    </div>
+  </div>
+
+  <p>
+    For this comparison I fixed the seed to 180 and only changed <code>num_inference_steps</code>.
+    With <strong>10 steps</strong>, the global structure of the peacock is present, but the textures in the
+    feathers and background are blurrier and contain more small artifacts. With <strong>50 steps</strong>,
+    the same basic composition is preserved, but the feathers and stained-glass patterns are sharper and more
+    detailed, and the city lights look more stable. This matches the intuition that more denoising steps let
+    the diffusion process refine the image more thoroughly, trading extra compute time for better visual quality.
+  </p>
+
+</body>
+</html>
