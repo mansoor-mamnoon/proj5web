@@ -149,6 +149,270 @@
     grows, providing a smooth path from a real image to pure Gaussian noise.
   </p>
 
+  <h2>Part 1.2: Classical Gaussian Denoising</h2>
+
+<p>
+  In this part, I tried to denoise the forward-diffused Campanile images from
+  \(t = 250, 500, 750\) using a classical Gaussian blur filter. The idea is that
+  averaging nearby pixels should reduce high-frequency noise. However, Gaussian
+  blur does not know anything about the underlying image structure, so it
+  inevitably removes edges and details along with the noise.
+</p>
+
+<h3>Noisy vs. Gaussian-Blurred Campanile</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_t250.png" alt="Noisy Campanile at t = 250">
+    <div class="caption">Noisy Campanile (t = 250)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_gauss_t250.png" alt="Gaussian blur denoised Campanile at t = 250">
+    <div class="caption">Gaussian blur denoised (t = 250)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_t500.png" alt="Noisy Campanile at t = 500">
+    <div class="caption">Noisy Campanile (t = 500)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_gauss_t500.png" alt="Gaussian blur denoised Campanile at t = 500">
+    <div class="caption">Gaussian blur denoised (t = 500)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_t750.png" alt="Noisy Campanile at t = 750">
+    <div class="caption">Noisy Campanile (t = 750)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_gauss_t750.png" alt="Gaussian blur denoised Campanile at t = 750">
+    <div class="caption">Gaussian blur denoised (t = 750)</div>
+  </div>
+</div>
+
+<h3>Discussion</h3>
+
+<p>
+  For <strong>t = 250</strong>, Gaussian blur slightly smooths the grain and makes the sky look
+  cleaner, but it also softens the edges of the Campanile. At <strong>t = 500</strong>, the filter
+  removes some high-frequency noise, yet the tower structure becomes very blurry and hard to see.
+  By <strong>t = 750</strong>, almost all semantic content has already been destroyed by the forward
+  process, and Gaussian blur can only smooth the noise into an even more featureless blob. This
+  illustrates a key limitation of classical denoising: simple low-pass filters cannot reconstruct
+  lost structure; they can only trade noise for sharpness.
+</p>
+
+
+<h2>Part 1.3: One-Step Denoising with the DeepFloyd UNet</h2>
+
+<p>
+  In this part, I use the pretrained DeepFloyd Stage&nbsp;1 UNet to perform
+  <strong>one-step denoising</strong> on the noisy Campanile images from
+  \(t = 250, 500, 750\). The UNet has been trained on a huge dataset of
+  \((x_0, x_t, t)\) pairs to predict the Gaussian noise \(\epsilon\) that was
+  added at each timestep. Given a noisy image \(x_t\), a timestep \(t\), and a
+  text embedding (here I use the unconditional/null embedding), the model
+  predicts \(\hat{\epsilon}\). Using the forward diffusion equation
+  \[
+    x_t = \sqrt{\bar{\alpha}_t}\, x_0 + \sqrt{1 - \bar{\alpha}_t}\, \epsilon,
+  \]
+  I invert it to recover an estimate of the original image:
+  \[
+    \hat{x}_0 = \frac{x_t - \sqrt{1 - \bar{\alpha}_t}\, \hat{\epsilon}}{\sqrt{\bar{\alpha}_t}}.
+  \]
+</p>
+
+<h3>Original vs Noisy vs One-Step Denoised</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
+    <div class="caption">Original Campanile (t = 0)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_t250.png" alt="Noisy Campanile at t = 250">
+    <div class="caption">Noisy Campanile (t = 250)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_onestep_t250.png" alt="One-step denoised Campanile at t = 250">
+    <div class="caption">One-step denoised (t = 250)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
+    <div class="caption">Original Campanile (t = 0)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_t500.png" alt="Noisy Campanile at t = 500">
+    <div class="caption">Noisy Campanile (t = 500)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_onestep_t500.png" alt="One-step denoised Campanile at t = 500">
+    <div class="caption">One-step denoised (t = 500)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
+    <div class="caption">Original Campanile (t = 0)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_t750.png" alt="Noisy Campanile at t = 750">
+    <div class="caption">Noisy Campanile (t = 750)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_onestep_t750.png" alt="One-step denoised Campanile at t = 750">
+    <div class="caption">One-step denoised (t = 750)</div>
+  </div>
+</div>
+
+<h3>Discussion</h3>
+
+<p>
+  Compared to the <strong>Gaussian blur</strong> results in Part&nbsp;1.2, the learned UNet
+  denoiser produces much sharper and more faithful reconstructions. At
+  \(t = 250\), the one-step denoised image is very close to the original Campanile,
+  with clear edges and recognizable structure. At \(t = 500\), some details are
+  still recovered, but fine textures and contrast begin to wash out. By
+  \(t = 750\), the model struggles: the forward process has already destroyed
+  most semantic information, so the reconstruction looks more like a generic
+  “building-like” blob than the true Campanile.
+</p>
+
+<p>
+  This highlights a key advantage of diffusion models over classical filters:
+  instead of blindly smoothing pixels, the UNet has learned a prior over natural
+  images and uses both the noisy input and the timestep \(t\) to infer which
+  structures are likely to be real signal and which are noise. However, it also
+  shows a limitation of one-step denoising from very large \(t\): when the noise
+  level is too high, the information about the original image is fundamentally
+  ambiguous, and even a strong generative model cannot perfectly reconstruct it.
+</p>
+
+<h2>Part 1.4: Iterative Denoising</h2>
+
+<p>
+  In this section, I implement <strong>iterative denoising</strong> with DeepFloyd IF. Instead of
+  attempting to recover the clean image <code>x_0</code> in a single step, I begin from a very
+  noisy image at timestep <code>t = 690</code> (from a strided schedule
+  <code>[990, 960, ..., 0]</code>) and repeatedly apply the DDPM update rule to move toward
+  progressively smaller timesteps until reaching <code>t = 0</code>.
+</p>
+
+<p>
+  At each step, the UNet predicts both the noise component and a learned variance term. I first
+  estimate <code>x_0</code> from the current noisy image <code>x_t</code>, use this to construct
+  the DDPM mean for the next timestep <code>x_{t'}</code>, and then add the correct amount of
+  variance using the provided <code>add_variance</code> function. This produces a sequence of
+  images that gradually increase signal-to-noise ratio while remaining consistent with the
+  diffusion model’s training process.
+</p>
+
+<h3>Noisy Campanile at Selected Timesteps</h3>
+
+<p>
+  Below are snapshots of the Campanile after the forward diffusion process at several timesteps
+  in my strided schedule. These correspond to intermediate states that the iterative denoiser
+  must reverse:
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_noisy_t690.png" alt="Noisy Campanile at t = 690">
+    <div class="caption">Noisy Campanile (t = 690)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_noisy_t540.png" alt="Noisy Campanile at t = 540">
+    <div class="caption">Noisy Campanile (t = 540)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_noisy_t390.png" alt="Noisy Campanile at t = 390">
+    <div class="caption">Noisy Campanile (t = 390)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_noisy_t240.png" alt="Noisy Campanile at t = 240">
+    <div class="caption">Noisy Campanile (t = 240)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_noisy_t90.png" alt="Noisy Campanile at t = 90">
+    <div class="caption">Noisy Campanile (t = 90)</div>
+  </div>
+</div>
+
+<h3>Iterative vs One-Step vs Gaussian Denoising</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_clean_t0.png" alt="Original Campanile, clean image">
+    <div class="caption">Original Campanile (t = 0)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_iter_denoised.png" alt="Iteratively denoised Campanile">
+    <div class="caption">Iteratively denoised (start t = 690)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_one_step.png" alt="One-step denoised Campanile">
+    <div class="caption">One-step denoised from t = 690</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_gaussian_blur.png" alt="Gaussian blurred Campanile">
+    <div class="caption">Gaussian blur (kernel 5, σ = 2)</div>
+  </div>
+</div>
+
+<h3>Discussion</h3>
+
+<p>
+  Starting from very heavy noise (<code>t = 690</code>), the
+  <strong>one-step</strong> denoising estimate actually preserves the
+  <em>structure</em> of the Campanile surprisingly well: the tower shape and
+  the original top are still recognizable, even though the image is quite
+  noisy and low quality overall. This makes sense, because we only apply the
+  UNet once to directly invert the noisy sample <code>x_t</code>, without
+  repeatedly resampling new noise.
+</p>
+
+<p>
+  In contrast, the <strong>iterative</strong> denoising procedure produces a
+  much cleaner and sharper image, but it sometimes
+  <strong>hallucinates a different tower top</strong> than in the original
+  photograph. By the time we reach <code>t = 690</code> in the forward
+  process, most of the original signal has been destroyed, so the model is
+  effectively “dreaming” a plausible tall tower rather than reconstructing
+  the exact Campanile. Repeatedly estimating <code>\hat{x}_0</code>,
+  resampling, and adding variance allows the sampler to move along the
+  diffusion model’s natural image manifold, which improves realism but can
+  drift away from the exact ground-truth details.
+</p>
+
+<p>
+  Finally, the <strong>Gaussian blur</strong> baseline is smooth but
+  fundamentally limited: it only removes high-frequency noise and cannot
+  recover missing structure. Compared to it, diffusion-based denoising (both
+  one-step and iterative) is able to restore meaningful geometry and texture,
+  highlighting the advantage of learning a generative model of natural
+  images rather than relying on purely classical filtering.
+</p>
+
+
+
+
+
+
+
 
 </body>
 </html>
