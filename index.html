@@ -408,6 +408,70 @@
 </p>
 
 
+<hr>
+
+<h2>Part 1.5: Diffusion Model Sampling</h2>
+
+<p>
+  In this section, I use my <code>iterative_denoise</code> function not to clean up an existing
+  image, but to <strong>generate images from pure noise</strong>. Following the assignment,
+  I sample an initial tensor
+  \(x_T \sim \mathcal{N}(0, I)\) of shape \(1 \times 3 \times 64 \times 64\) and then run the
+  denoising loop from the noisiest timestep down to \(t = 0\) using the same
+  <code>strided_timesteps</code> schedule as in Part&nbsp;1.4.
+</p>
+
+<p>
+  The denoiser is conditioned on the text prompt embedding for
+  <code>"a high quality photo"</code>. At each timestep \(t\), the UNet predicts the noise in the
+  current image, which I combine with the diffusion coefficients
+  \(\bar{\alpha}_t\) to form an estimate of the clean image \(x_0\). I then use the DDPM update
+  rule with learned variance to step from \(x_t\) to a slightly less noisy image \(x_{t'}\),
+  and repeat until I reach a final sample at \(t = 0\).
+</p>
+
+<h3>Samples from Pure Noise (Prompt: "a high quality photo")</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part1_5_sample_1.png" alt="Sample 1 from pure noise">
+    <div class="caption">Sample 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part1_5_sample_2.png" alt="Sample 2 from pure noise">
+    <div class="caption">Sample 2</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part1_5_sample_3.png" alt="Sample 3 from pure noise">
+    <div class="caption">Sample 3</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part1_5_sample_4.png" alt="Sample 4 from pure noise">
+    <div class="caption">Sample 4</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part1_5_sample_5.png" alt="Sample 5 from pure noise">
+    <div class="caption">Sample 5</div>
+  </div>
+</div>
+
+<h3>Discussion</h3>
+
+<p>
+  All five images start from independent Gaussian noise but share the same text prompt
+  <code>"a high quality photo"</code>. Even without classifier-free guidance, the model produces
+  reasonably realistic, photo-like outputs: we see natural textures, lighting, and depth,
+  rather than pure noise. However, the samples are still somewhat soft or painterly and can
+  contain artifacts and odd details. This matches the expectation from the assignment:
+  the iterative denoising procedure steers noise towards the natural image manifold, but
+  without stronger guidance (which I add later with CFG), the images are only loosely
+  constrained by the prompt.
+</p>
+
+
 
 
 
