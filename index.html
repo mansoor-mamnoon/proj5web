@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
   <meta charset="utf-8">
   <title>CS 180 Project 5A – Diffusion Models</title>
   <style>
@@ -95,6 +98,57 @@
     detailed, and the city lights look more stable. This matches the intuition that more denoising steps let
     the diffusion process refine the image more thoroughly, trading extra compute time for better visual quality.
   </p>
+
+  <h2>Part 1.1: Forward Diffusion Process</h2>
+
+  <p>
+    In this section, I visualize the <strong>forward process</strong> of diffusion on a real image.
+    Starting from a clean 64×64 Campanile photo \(x_0\), I apply the forward noising equation
+    \(
+      x_t = \sqrt{\bar{\alpha}_t}\, x_0 + \sqrt{1 - \bar{\alpha}_t}\, \epsilon
+    \)
+    using the same \( \bar{\alpha}_t \) schedule as the DeepFloyd model. As the timestep
+    <code>t</code> increases, the contribution of the original image decreases and the contribution of
+    Gaussian noise increases.
+  </p>
+
+  <h3>Campanile at Different Noise Levels</h3>
+
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
+      <div class="caption">Campanile, clean image (t = 0)</div>
+    </div>
+    <div class="img-col">
+      <img src="img/campanile_t250.png" alt="Noisy Campanile at t = 250">
+      <div class="caption">Campanile at t = 250</div>
+    </div>
+  </div>
+
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/campanile_t500.png" alt="Noisy Campanile at t = 500">
+      <div class="caption">Campanile at t = 500</div>
+    </div>
+    <div class="img-col">
+      <img src="img/campanile_t750.png" alt="Noisy Campanile at t = 750">
+      <div class="caption">Campanile at t = 750</div>
+    </div>
+  </div>
+
+  <h3>Discussion</h3>
+
+  <p>
+    At <strong>t = 0</strong>, the image is completely clean: we see a sharp Campanile with clear
+    edges and textures. At <strong>t = 250</strong>, there is noticeable grain, but the tower and
+    background are still clearly recognizable. By <strong>t = 500</strong>, the structure is much
+    harder to see: the noise dominates and only a faint outline of the tower remains. At
+    <strong>t = 750</strong>, the image is nearly pure noise, and most semantic content has been
+    destroyed. This matches the design of the diffusion forward process: as t increases, the signal
+    \(\sqrt{\bar{\alpha}_t} x_0\) shrinks, and the noise term \(\sqrt{1 - \bar{\alpha}_t} \epsilon\)
+    grows, providing a smooth path from a real image to pure Gaussian noise.
+  </p>
+
 
 </body>
 </html>
