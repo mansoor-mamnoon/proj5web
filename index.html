@@ -112,6 +112,44 @@
     Gaussian noise increases.
   </p>
 
+  <h3>Implementation: Forward Diffusion Function</h3>
+
+  <p>
+    I implement the forward diffusion step
+    \(x_t = \sqrt{\bar{\alpha}_t}\,x_0 + \sqrt{1 - \bar{\alpha}_t}\,\epsilon\)
+    in a helper function <code>forward(im, t)</code>. Given a clean image
+    \(x_0\) and a timestep <code>t</code>, it looks up \(\bar{\alpha}_t\) from
+    the pretrained schedule <code>alphas_cumprod</code>, samples fresh Gaussian
+    noise \(\epsilon \sim \mathcal{N}(0, I)\), and returns the corresponding
+    noisy image \(x_t\).
+  </p>
+
+  <pre><code>def forward(im, t):
+    """
+    Args:
+      im : torch tensor of size (1, 3, 64, 64) representing the clean image
+      t  : integer timestep
+
+    Returns:
+      im_noisy : torch tensor of size (1, 3, 64, 64) representing the noisy
+                 image at timestep t
+    """
+    with torch.no_grad():
+        # Look up cumulative product of alphas at timestep t
+        alpha_bar_t = alphas_cumprod[t].to(im.device)
+        sqrt_alpha_bar_t = alpha_bar_t.sqrt()
+        sqrt_one_minus_alpha_bar_t = (1.0 - alpha_bar_t).sqrt()
+
+        # Sample Gaussian noise epsilon ~ N(0, I)
+        eps = torch.randn_like(im)
+
+        # Forward diffusion equation: x_t = sqrt(a_bar_t) * x_0
+        #                            + sqrt(1 - a_bar_t) * eps
+        im_noisy = sqrt_alpha_bar_t * im + sqrt_one_minus_alpha_bar_t * eps
+
+    return im_noisy</code></pre>
+
+
   <h3>Campanile at Different Noise Levels</h3>
 
   <div class="img-row">
@@ -315,6 +353,120 @@
   diffusion model’s training process.
 </p>
 
+<h3>Implementation: Iterative Denoising with Learned Variance</h3>
+
+<p>
+  To reverse the diffusion process, I repeatedly apply a DDPM-style update
+  from a noisy image \(x_t\) to a slightly less noisy image \(x_{t'}\).
+  The helper <code>add_variance</code> uses the scheduler’s learned variance
+  prediction to add the correct amount of noise at each step, and
+  <code>iterative_denoise</code> loops over all timesteps until reaching
+  \(t = 0\).
+</p>
+
+<pre><code>def add_variance(predicted_variance, t, image):
+  """
+  Args:
+    predicted_variance : (1, 3, 64, 64) tensor, last three channels of UNet output
+    t                  : tensor indicating timestep
+    image              : (1, 3, 64, 64) tensor, current image
+
+  Returns:
+    (1, 3, 64, 64) tensor, image with the correct amount of variance added
+  """
+  # Query the DDPM scheduler for the variance at timestep t
+  variance = stage_1.scheduler._get_variance(
+      t, predicted_variance=predicted_variance
+  )
+  variance_noise = torch.randn_like(image)
+  variance = torch.exp(0.5 * variance) * variance_noise
+  return image + variance
+
+
+def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True):
+  """
+  Perform iterative denoising from timestep timesteps[i_start] down to 0.
+
+  Args:
+    im_noisy      : (1, 3, 64, 64) noisy image at timesteps[i_start]
+    i_start       : index into `timesteps` to start from
+    prompt_embeds : text embedding used to condition the UNet
+    timesteps     : list of integer timesteps, e.g. [990, 960, ..., 0]
+    display       : if True, show intermediate results every few steps
+
+  Returns:
+    clean : numpy array of shape (1, 3, 64, 64) in [-1, 1]
+  """
+  image = im_noisy  # x_t
+
+  with torch.no_grad():
+      for i in range(i_start, len(timesteps) - 1):
+          # 1) Move from timestep t to the next smaller timestep prev_t
+          t = timesteps[i]
+          prev_t = timesteps[i + 1]
+
+          # 2) Load alpha-bar values and compute alpha, beta
+          alpha_bar_t = alphas_cumprod[t].to(image.device).type_as(image)
+          alpha_bar_prev = alphas_cumprod[prev_t].to(image.device).type_as(image)
+
+          alpha = alpha_bar_t / alpha_bar_prev
+          beta = 1.0 - alpha
+
+          # 3) UNet predicts noise and variance at timestep t
+          model_output = stage_1.unet(
+              image,
+              t,
+              encoder_hidden_states=prompt_embeds,
+              return_dict=False
+          )[0]  # (1, 6, 64, 64)
+
+          noise_est, predicted_variance = torch.split(
+              model_output, image.shape[1], dim=1
+          )
+
+          # 4) Estimate x_0 from x_t and predicted noise
+          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
+          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
+
+          x0_hat = (image - sqrt_one_minus_alpha_bar_t * noise_est) / sqrt_alpha_bar_t
+
+          # 5) Compute DDPM mean for x_{t'}
+          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
+          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
+
+          pred_prev_image_mean = coef_x0 * x0_hat + coef_xt * image
+
+          # 6) Add learned variance on the scheduler's device
+          scheduler_device = stage_1.scheduler.timesteps.device
+          scheduler_dtype = stage_1.scheduler.timesteps.dtype
+
+          pred_prev_for_sched = pred_prev_image_mean.to(
+              scheduler_device, dtype=torch.float32
+          )
+          predicted_variance_for_sched = predicted_variance.to(
+              scheduler_device, dtype=torch.float32
+          )
+          t_tensor = torch.tensor([t], device=scheduler_device, dtype=scheduler_dtype)
+
+          pred_prev_with_var = add_variance(
+              predicted_variance_for_sched,
+              t_tensor,
+              pred_prev_for_sched,
+          )
+
+          # 7) Move back to model device and precision
+          image = pred_prev_with_var.to(im_noisy.device).type_as(im_noisy)
+
+          if display and ((i - i_start) % 5 == 0 or i == len(timesteps) - 2):
+              print(f"Denoising step {i - i_start}: t = {t} -> t' = {prev_t}")
+              img_vis = image[0].detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
+              media.show_image(img_vis)
+
+      clean = image.cpu().detach().numpy()
+
+  return clean</code></pre>
+
+
 <h3>Noisy Campanile at Selected Timesteps</h3>
 
 <p>
@@ -503,6 +655,132 @@
   unconditional noise, which tends to produce sharper, more on-prompt images
   at the cost of diversity.
 </p>
+
+<h3>Implementation: Iterative Denoising with Classifier-Free Guidance</h3>
+
+<p>
+  For Classifier-Free Guidance (CFG), I run the UNet twice at each timestep:
+  once with the conditional prompt embedding \(\epsilon_c\) for
+  "<code>a high quality photo</code>", and once with the unconditional embedding
+  \(\epsilon_u\) for the empty prompt. I combine them as
+  \(\epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)\) with
+  guidance scale \(\gamma = 7\), and then use this guided noise in the same
+  DDPM update rule as in Part&nbsp;1.4.
+</p>
+
+<pre><code># Precomputed text embeddings
+prompt_embeds = prompt_embeds_dict["a high quality photo"]
+uncond_prompt_embeds = prompt_embeds_dict[""]
+
+
+def iterative_denoise_cfg(
+  im_noisy,
+  i_start,
+  prompt_embeds,
+  uncond_prompt_embeds,
+  timesteps,
+  scale=7,
+  display=True,
+):
+  """
+  Iterative denoising with Classifier-Free Guidance (CFG).
+
+  Args:
+    im_noisy            : (1, 3, 64, 64) noisy image at timesteps[i_start]
+    i_start             : index into `timesteps` to start from
+    prompt_embeds       : conditional text embedding
+    uncond_prompt_embeds: unconditional (empty) text embedding
+    timesteps           : list of timesteps, e.g. [990, 960, ..., 0]
+    scale               : CFG guidance scale gamma
+    display             : if True, show intermediate images
+
+  Returns:
+    clean : numpy array of shape (1, 3, 64, 64) in [-1, 1]
+  """
+  image = im_noisy
+
+  with torch.no_grad():
+      for i in range(i_start, len(timesteps) - 1):
+          t = timesteps[i]
+          prev_t = timesteps[i + 1]
+
+          # 1) Load alpha-bar values and compute alpha, beta
+          alpha_bar_t = alphas_cumprod[t].to(image.device).type_as(image)
+          alpha_bar_prev = alphas_cumprod[prev_t].to(image.device).type_as(image)
+
+          alpha = alpha_bar_t / alpha_bar_prev
+          beta = 1.0 - alpha
+
+          # 2) Conditional UNet pass (with text)
+          model_output = stage_1.unet(
+              image,
+              t,
+              encoder_hidden_states=prompt_embeds,
+              return_dict=False
+          )[0]
+
+          # 3) Unconditional UNet pass (empty prompt)
+          uncond_output = stage_1.unet(
+              image,
+              t,
+              encoder_hidden_states=uncond_prompt_embeds,
+              return_dict=False
+          )[0]
+
+          # Split into noise and variance
+          noise_est, predicted_variance = torch.split(
+              model_output, image.shape[1], dim=1
+          )
+          uncond_noise_est, _ = torch.split(
+              uncond_output, image.shape[1], dim=1
+          )
+
+          # 4) Classifier-Free Guidance:
+          #    eps = eps_u + scale * (eps_c - eps_u)
+          guided_noise = uncond_noise_est + scale * (noise_est - uncond_noise_est)
+
+          # 5) Estimate x_0 from x_t and guided noise
+          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
+          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
+
+          x0_hat = (image - sqrt_one_minus_alpha_bar_t * guided_noise) / sqrt_alpha_bar_t
+
+          # 6) DDPM mean for x_{t'}
+          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
+          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
+
+          pred_prev_image_mean = coef_x0 * x0_hat + coef_xt * image
+
+          # 7) Add learned variance via scheduler
+          scheduler_device = stage_1.scheduler.timesteps.device
+          scheduler_dtype = stage_1.scheduler.timesteps.dtype
+
+          pred_prev_for_sched = pred_prev_image_mean.to(
+              scheduler_device, dtype=torch.float32
+          )
+          predicted_variance_for_sched = predicted_variance.to(
+              scheduler_device, dtype=torch.float32
+          )
+          t_tensor = torch.tensor([t], device=scheduler_device, dtype=scheduler_dtype)
+
+          pred_prev_with_var = add_variance(
+              predicted_variance_for_sched,
+              t_tensor,
+              pred_prev_for_sched,
+          )
+
+          # 8) Move back to model device / dtype
+          image = pred_prev_with_var.to(im_noisy.device).type_as(im_noisy)
+
+          if display and ((i - i_start) % 5 == 0 or i == len(timesteps) - 2):
+              print(f"[CFG] Denoising step {i - i_start}: t = {t} -> t' = {prev_t}")
+              img_vis = image[0].detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
+              media.show_image(img_vis)
+
+      clean = image.cpu().detach().numpy()
+
+  return clean</code></pre>
+
 
 <h3>CFG Samples for "a high quality photo"</h3>
 
