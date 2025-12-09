@@ -1258,115 +1258,193 @@ def iterative_denoise_cfg(
 </div>
 
 
-<h3>1.7.3 Text-Conditioned Image-to-image Translation</h3>
+<!-- ============================= -->
+<!--       1.7.3 SDEdit Section    -->
+<!-- ============================= -->
 
-<p>
-  Here I repeat SDEdit but with more descriptive prompts. For the Campanile I use
-  "<code>a high quality photo of a tall clock tower on a university campus</code>".
-  For the coastal town and beach images I use prompts describing those scenes. Each row
-  shows SDEdit outputs for noise levels
-  <code>[1, 3, 5, 7, 10, 20]</code>.
-</p>
+<section id="sedit">
+  <h1>1.7.3 Text-Conditioned Image-to-Image Translation</h1>
 
-<h4>Campanile (text-conditional)</h4>
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i1.png" alt="Campanile text SDEdit i=1">
-    <div class="caption">i_start = 1</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i3.png" alt="Campanile text SDEdit i=3">
-    <div class="caption">i_start = 3</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i5.png" alt="Campanile text SDEdit i=5">
-    <div class="caption">i_start = 5</div>
-  </div>
-</div>
+  <p>
+    In this section, I use SDEdit with Classifier-Free Guidance to transform real images
+    toward imaginative text prompts. Each transformation begins by adding noise at a given level
+    (<code>i_start ∈ {1,3,5,7,10,20}</code>) and then denoising using a text prompt.
+    Lower noise levels preserve the original structure, while higher noise levels result
+    in stronger transformations.
+  </p>
 
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i7.png" alt="Campanile text SDEdit i=7">
-    <div class="caption">i_start = 7</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i10.png" alt="Campanile text SDEdit i=10">
-    <div class="caption">i_start = 10</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_campanile_i20.png" alt="Campanile text SDEdit i=20">
-    <div class="caption">i_start = 20</div>
-  </div>
-</div>
+  <!-- ------------------------ -->
+  <!-- CAMPANILE EXAMPLE        -->
+  <!-- ------------------------ -->
+  <h2>Campanile → “Futuristic Rocket Launch Tower”</h2>
+  <p>
+    <strong>Prompt:</strong>
+    <em>a futuristic rocket launch tower standing on an alien planet with purple sky</em>
+  </p>
 
-<h4>Coastal Town (house image)</h4>
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_house_i1.png" alt="House text SDEdit i=1">
-    <div class="caption">i_start = 1</div>
+  <div class="image-grid">
+    <figure>
+      <img src="img/campanile_sedit_rocket_1.png" alt="Campanile i_start 1">
+      <figcaption>i_start = 1</figcaption>
+    </figure>
+    <figure>
+      <img src="img/campanile_sedit_rocket_3.png" alt="Campanile i_start 3">
+      <figcaption>i_start = 3</figcaption>
+    </figure>
+    <figure>
+      <img src="img/campanile_sedit_rocket_5.png" alt="Campanile i_start 5">
+      <figcaption>i_start = 5</figcaption>
+    </figure>
+    <figure>
+      <img src="img/campanile_sedit_rocket_7.png" alt="Campanile i_start 7">
+      <figcaption>i_start = 7</figcaption>
+    </figure>
+    <figure>
+      <img src="img/campanile_sedit_rocket_10.png" alt="Campanile i_start 10">
+      <figcaption>i_start = 10</figcaption>
+    </figure>
+    <figure>
+      <img src="img/campanile_sedit_rocket_20.png" alt="Campanile i_start 20">
+      <figcaption>i_start = 20</figcaption>
+    </figure>
   </div>
-  <div class="img-col">
-    <img src="img/txtsedit_house_i3.png" alt="House text SDEdit i=3">
-    <div class="caption">i_start = 3</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_house_i5.png" alt="House text SDEdit i=5">
-    <div class="caption">i_start = 5</div>
-  </div>
-</div>
 
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_house_i7.png" alt="House text SDEdit i=7">
-    <div class="caption">i_start = 7</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_house_i10.png" alt="House text SDEdit i=10">
-    <div class="caption">i_start = 10</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_house_i20.png" alt="House text SDEdit i=20">
-    <div class="caption">i_start = 20</div>
-  </div>
-</div>
-
-<h4>Beach Scene</h4>
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i1.png" alt="Beach text SDEdit i=1">
-    <div class="caption">i_start = 1</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i3.png" alt="Beach text SDEdit i=3">
-    <div class="caption">i_start = 3</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i5.png" alt="Beach text SDEdit i=5">
-    <div class="caption">i_start = 5</div>
-  </div>
-</div>
-
-<div class="img-row">
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i7.png" alt="Beach text SDEdit i=7">
-    <div class="caption">i_start = 7</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i10.png" alt="Beach text SDEdit i=10">
-    <div class="caption">i_start = 10</div>
-  </div>
-  <div class="img-col">
-    <img src="img/txtsedit_beach_i20.png" alt="Beach text SDEdit i=20">
-    <div class="caption">i_start = 20</div>
-  </div>
-</div>
+  <figure>
+    <img src="img/campanile_clean.png" alt="Original Campanile" class="original-img">
+    <figcaption>Original Campanile Image</figcaption>
+  </figure>
 
 
-<p>
-  For both the house and beach scenes, the text-conditional sampler preserves the overall layout
-  while nudging colors and textures to better match the descriptive prompt (“sunny beach with a
-  white hat and sandals”, “coastal town with white houses and red roofs”).
-</p>
+
+  <!-- ------------------------ -->
+  <!-- BEACH EXAMPLE            -->
+  <!-- ------------------------ -->
+  <h2>Beach → “Penguins Sliding Down Icy Hills”</h2>
+  <p>
+    <strong>Prompt:</strong>
+    <em>a snowy mountain landscape with penguins sliding down icy hills</em>
+  </p>
+
+  <div class="image-grid">
+    <figure>
+      <img src="img/beach_sedit_penguins_1.png">
+      <figcaption>i_start = 1</figcaption>
+    </figure>
+    <figure>
+      <img src="img/beach_sedit_penguins_3.png">
+      <figcaption>i_start = 3</figcaption>
+    </figure>
+    <figure>
+      <img src="img/beach_sedit_penguins_5.png">
+      <figcaption>i_start = 5</figcaption>
+    </figure>
+    <figure>
+      <img src="img/beach_sedit_penguins_7.png">
+      <figcaption>i_start = 7</figcaption>
+    </figure>
+    <figure>
+      <img src="img/beach_sedit_penguins_10.png">
+      <figcaption>i_start = 10</figcaption>
+    </figure>
+    <figure>
+      <img src="img/beach_sedit_penguins_20.png">
+      <figcaption>i_start = 20</figcaption>
+    </figure>
+  </div>
+
+  <figure>
+    <img src="img/sedit_beach_original.png" class="original-img">
+    <figcaption>Original Beach Image</figcaption>
+  </figure>
+
+
+
+  <!-- ------------------------ -->
+  <!-- HOUSE EXAMPLE            -->
+  <!-- ------------------------ -->
+  <h2>Coastal Town → “Glowing Mushroom Village”</h2>
+  <p>
+    <strong>Prompt:</strong>
+    <em>a medieval village built entirely out of enormous glowing mushrooms</em>
+  </p>
+
+  <div class="image-grid">
+    <figure>
+      <img src="img/house_sedit_mushrooms_1.png">
+      <figcaption>i_start = 1</figcaption>
+    </figure>
+    <figure>
+      <img src="img/house_sedit_mushrooms_3.png">
+      <figcaption>i_start = 3</figcaption>
+    </figure>
+    <figure>
+      <img src="img/house_sedit_mushrooms_5.png">
+      <figcaption>i_start = 5</figcaption>
+    </figure>
+    <figure>
+      <img src="img/house_sedit_mushrooms_7.png">
+      <figcaption>i_start = 7</figcaption>
+    </figure>
+    <figure>
+      <img src="img/house_sedit_mushrooms_10.png">
+      <figcaption>i_start = 10</figcaption>
+    </figure>
+    <figure>
+      <img src="img/house_sedit_mushrooms_20.png">
+      <figcaption>i_start = 20</figcaption>
+    </figure>
+  </div>
+
+  <figure>
+    <img src="img/sedit_house_original.png" class="original-img">
+    <figcaption>Original House Image</figcaption>
+  </figure>
+
+</section>
+
+
+<!-- ============================= -->
+<!-- CSS for Grid Layout           -->
+<!-- ============================= -->
+
+<style>
+  #sedit {
+    font-family: Arial, sans-serif;
+    margin-bottom: 60px;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .image-grid figure {
+    text-align: center;
+  }
+
+  .image-grid img {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .original-img {
+    width: 40%;
+    display: block;
+    margin: 25px auto;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  figcaption {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+</style>
+
 
 <h2>Part 1.8: Visual Anagrams</h2>
 
