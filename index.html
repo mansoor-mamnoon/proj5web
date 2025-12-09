@@ -472,6 +472,969 @@
 </p>
 
 
+<h2>Part 1.6: Classifier-Free Guidance (CFG)</h2>
+
+<p>
+  In Part 1.5, I sampled images by denoising pure Gaussian noise using my
+  iterative diffusion sampler. The results looked vaguely photographic, but
+  many images were blurry or lacked clear structure. In this section I use
+  <strong>Classifier-Free Guidance (CFG)</strong> to improve sample quality.
+</p>
+
+<p>
+  At each denoising step, the UNet predicts two noise estimates:
+  a <em>conditional</em> noise estimate \(\epsilon_c\) given the text prompt
+  "<code>a high quality photo</code>", and an <em>unconditional</em> noise
+  estimate \(\epsilon_u\) given the empty prompt "".
+  CFG combines them as:
+</p>
+
+<p style="text-align:center;">
+  \[
+    \epsilon = \epsilon_u + \gamma \, (\epsilon_c - \epsilon_u),
+  \]
+</p>
+
+<p>
+  where \(\gamma\) is the guidance scale. I use \(\gamma = 7\). When
+  \(\gamma = 0\), the model ignores the text and behaves unconditionally;
+  when \(\gamma = 1\), it uses the normal conditional prediction; and when
+  \(\gamma &gt; 1\), it exaggerates the difference between conditional and
+  unconditional noise, which tends to produce sharper, more on-prompt images
+  at the cost of diversity.
+</p>
+
+<h3>CFG Samples for "a high quality photo"</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/cfg_sample_1.png" alt="CFG sample 1: portrait-style photo">
+    <div class="caption">Sample 1 with CFG (\(\gamma = 7\))</div>
+  </div>
+  <div class="img-col">
+    <img src="img/cfg_sample_2.png" alt="CFG sample 2: portrait-style photo">
+    <div class="caption">Sample 2 with CFG</div>
+  </div>
+  <div class="img-col">
+    <img src="img/cfg_sample_3.png" alt="CFG sample 3: portrait-style photo">
+    <div class="caption">Sample 3 with CFG</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/cfg_sample_4.png" alt="CFG sample 4: portrait-style photo">
+    <div class="caption">Sample 4 with CFG</div>
+  </div>
+  <div class="img-col">
+    <img src="img/cfg_sample_5.png" alt="CFG sample 5: portrait-style photo">
+    <div class="caption">Sample 5 with CFG</div>
+  </div>
+</div>
+
+<h3>Discussion</h3>
+
+<p>
+  All samples use the same random seed setup as earlier parts and are generated
+  by starting from pure Gaussian noise and running my
+  <code>iterative_denoise_cfg</code> loop with the prompt
+  "<code>a high quality photo</code>" and guidance scale \(\gamma = 7\).
+  Compared to the unguided samples in Part 1.5, these images are noticeably
+  more <strong>photorealistic</strong>: they look like well-lit portraits with
+  sharper edges, clearer facial features, and more consistent lighting and
+  background structure. At the same time, the samples are less diverse: most
+  images collapse toward a similar “high-quality portrait” style, which
+  illustrates the usual tradeoff of CFG – higher fidelity but reduced variety.
+</p>
+
+
+<h2>Part 1.7: Image-to-image Translation (SDEdit)</h2>
+
+<p>
+  In this part I reuse my iterative denoising sampler, but instead of starting from pure noise
+  I start from a <em>noised real image</em>. I first apply the forward diffusion process to the
+  original 64×64 Campanile image to obtain \(x_t\) at various timesteps, and then run
+  <code>iterative_denoise_cfg</code> from that point down to \(t = 0\) using the prompt
+  "<code>a high quality photo</code>". This is essentially the SDEdit algorithm: it projects
+  a noisy image back onto the natural image manifold, with the amount of change controlled by
+  how much noise I add.
+</p>
+
+<h3>1.7 – Campanile SDEdit (noise levels 1, 3, 5, 7, 10, 20)</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_campanile_i1.png" alt="Campanile SDEdit i_start=1">
+    <div class="caption">Campanile SDEdit (i_start = 1)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_campanile_i3.png" alt="Campanile SDEdit i_start=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_campanile_i5.png" alt="Campanile SDEdit i_start=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_campanile_i7.png" alt="Campanile SDEdit i_start=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_campanile_i10.png" alt="Campanile SDEdit i_start=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_campanile_i20.png" alt="Campanile SDEdit i_start=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_campanile_original.png" alt="Original Campanile">
+    <div class="caption">Original Campanile</div>
+  </div>
+</div>
+
+<p>
+  For very small noise (i_start = 1, 3), the edits are subtle: the sky and trees shift slightly
+  but the tower is almost unchanged. As I start from larger noise levels (i_start = 10, 20), the
+  model has to hallucinate much more content, so the campanile’s top and background can change
+  substantially while still staying “photo-like”.
+</p>
+
+<h3>1.7 – SDEdit on My Own Photos (House and Beach)</h3>
+
+<p>
+  I also applied the same procedure to two web images: a coastal town with white houses and red
+  roofs, and a beach scene with a hat and sandals. In each case I ran SDEdit from noise levels
+  [1, 3, 5, 7, 10, 20] with the generic prompt "<code>a high quality photo</code>".
+</p>
+
+<h4>Coastal Town</h4>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_house_i1.png" alt="House SDEdit i_start=1">
+    <div class="caption">House SDEdit (i_start = 1)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_house_i3.png" alt="House SDEdit i_start=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_house_i5.png" alt="House SDEdit i_start=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_house_i7.png" alt="House SDEdit i_start=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_house_i10.png" alt="House SDEdit i_start=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_house_i20.png" alt="House SDEdit i_start=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_house_original.png" alt="Original house photo">
+    <div class="caption">Original coastal town photo</div>
+  </div>
+</div>
+
+<h4>Beach Scene</h4>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_beach_i1.png" alt="Beach SDEdit i_start=1">
+    <div class="caption">Beach SDEdit (i_start = 1)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_beach_i3.png" alt="Beach SDEdit i_start=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_beach_i5.png" alt="Beach SDEdit i_start=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_beach_i7.png" alt="Beach SDEdit i_start=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_beach_i10.png" alt="Beach SDEdit i_start=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_beach_i20.png" alt="Beach SDEdit i_start=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_beach_original.png" alt="Original beach photo">
+    <div class="caption">Original beach photo</div>
+  </div>
+</div>
+
+<h3>1.7.1 Editing Hand-Drawn and Web Images</h3>
+
+<p>
+  SDEdit is especially fun when I start from non-realistic inputs such as clipart and my own
+  sketches. Below I show one web image (a vector-style avocado) and two hand-drawn images that I
+  drew in the Colab canvas, each projected to the natural image manifold at increasing noise
+  levels.
+</p>
+
+<h4>Web Image SDEdit</h4>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_web_i1.png" alt="Web SDEdit i_start=1">
+    <div class="caption">Web SDEdit (i_start = 1)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_web_i3.png" alt="Web SDEdit i_start=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_web_i5.png" alt="Web SDEdit i_start=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_web_i7.png" alt="Web SDEdit i_start=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_web_i10.png" alt="Web SDEdit i_start=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_web_i20.png" alt="Web SDEdit i_start=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_web_original.png" alt="Original web image">
+    <div class="caption">Original web image</div>
+  </div>
+</div>
+
+<h4>Two Hand-Drawn Inputs</h4>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_hand1_i1.png" alt="Hand-drawn 1 SDEdit i_start=1">
+    <div class="caption">Hand-drawn #1, i_start = 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand1_i3.png" alt="Hand-drawn 1 SDEdit i_start=3">
+    <div class="caption">Hand-drawn #1, i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand1_i5.png" alt="Hand-drawn 1 SDEdit i_start=5">
+    <div class="caption">Hand-drawn #1, i_start = 5</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand1_i7.png" alt="Hand-drawn 1 SDEdit i_start=7">
+    <div class="caption">Hand-drawn #1, i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand1_i10.png" alt="Hand-drawn 1 SDEdit i_start=10">
+    <div class="caption">Hand-drawn #1, i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand1_i20.png" alt="Hand-drawn 1 SDEdit i_start=20">
+    <div class="caption">Hand-drawn #1, i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_hand1_original.png" alt="Original hand-drawn 1">
+    <div class="caption">Original hand-drawn #1</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_hand2_i1.png" alt="Hand-drawn 2 SDEdit i_start=1">
+    <div class="caption">Hand-drawn #2, i_start = 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand2_i3.png" alt="Hand-drawn 2 SDEdit i_start=3">
+    <div class="caption">Hand-drawn #2, i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand2_i5.png" alt="Hand-drawn 2 SDEdit i_start=5">
+    <div class="caption">Hand-drawn #2, i_start = 5</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand2_i7.png" alt="Hand-drawn 2 SDEdit i_start=7">
+    <div class="caption">Hand-drawn #2, i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand2_i10.png" alt="Hand-drawn 2 SDEdit i_start=10">
+    <div class="caption">Hand-drawn #2, i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/sedit_hand2_i20.png" alt="Hand-drawn 2 SDEdit i_start=20">
+    <div class="caption">Hand-drawn #2, i_start = 20</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_hand2_original.png" alt="Original hand-drawn 2">
+    <div class="caption">Original hand-drawn #2</div>
+  </div>
+</div>
+
+<h3>1.7.2 Inpainting</h3>
+
+<p>
+  For inpainting, I modify my CFG denoising loop so that at every timestep I overwrite the
+  unmasked region with a noised version of the original image \(x_{\text{orig}}\) at the same
+  timestep. If \(m\) is a binary mask where 1 indicates the editable region, the update is
+</p>
+
+<p style="text-align:center;">
+  \(x_t \leftarrow m \odot x_t + (1 - m)\odot \text{forward}(x_{\text{orig}}, t).\)
+</p>
+
+<p>
+  This keeps everything outside the mask consistent with the original photo, while the diffusion
+  model freely resynthesizes content inside the mask.
+</p>
+
+<h4>Code: Inpainting Function</h4>
+
+<p>
+  Below is the core PyTorch implementation of my <code>inpaint</code> function. It reuses the
+  CFG denoising loop from earlier parts, but at every iteration it overwrites the unmasked
+  region with a noised version of the original image so that only the masked pixels are edited.
+</p>
+
+<pre><code>def inpaint(original_image, mask, prompt_embeds, uncond_prompt_embeds,
+          timesteps, scale=7, display=False):
+  """
+  original_image : (1, 3, H, W) in [-1, 1]
+  mask           : (1, 3, H, W), 1 = editable region, 0 = keep original
+  prompt_embeds  : conditional text embedding
+  uncond_prompt_embeds : unconditional (empty) text embedding
+  timesteps      : diffusion schedule (e.g. strided_timesteps)
+  scale          : classifier-free guidance scale
+  """
+
+  # Work on GPU, keep original separate
+  original_image = original_image.to(device).float()
+  x = torch.randn_like(original_image, device=device, dtype=torch.float16)
+
+  mask = mask.to(device).type_as(x)
+  prompt_embeds        = prompt_embeds.to(device).half()
+  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
+
+  with torch.no_grad():
+      for i in range(len(timesteps) - 1):
+          t = timesteps[i]
+          t_prev = timesteps[i + 1]
+
+          # 1) Force unmasked region to follow the original image at timestep t
+          noisy_orig = forward(original_image, t).to(device).type_as(x)
+          x = mask * x + (1.0 - mask) * noisy_orig
+
+          # 2) Compute noise schedule coefficients
+          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
+          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
+          alpha = alpha_bar_t / alpha_bar_prev
+          beta  = 1.0 - alpha
+
+          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
+          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
+
+          # 3) Conditional and unconditional UNet passes
+          cond_out = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds,
+                                  return_dict=False)[0]
+          uncond_out = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
+                                    return_dict=False)[0]
+
+          eps_c, pred_var = torch.split(cond_out, x.shape[1], dim=1)
+          eps_u, _        = torch.split(uncond_out, x.shape[1], dim=1)
+
+          # 4) Classifier-free guidance
+          eps = eps_u + scale * (eps_c - eps_u)
+
+          # 5) Estimate x0 and DDPM mean for the previous timestep
+          x0_hat = (x - sqrt_one_minus_alpha_bar_t * eps) / sqrt_alpha_bar_t
+
+          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
+          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
+          mean = coef_x0 * x0_hat + coef_xt * x
+
+          # 6) Add learned variance
+          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
+                                  dtype=stage_1.scheduler.timesteps.dtype)
+          mean_for_sched = mean.to(torch.float32)
+          var_for_sched  = pred_var.to(torch.float32)
+
+          x = add_variance(var_for_sched, t_tensor, mean_for_sched)
+          x = x.to(device).type_as(mask)
+
+  return x.cpu().numpy()</code></pre>
+
+
+<h4>Campanile Inpainting</h4>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/inpaint_campanile_original.png" alt="Campanile original">
+    <div class="caption">Original Campanile</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_campanile_mask.png" alt="Campanile inpainting mask">
+    <div class="caption">Inpainting mask (top of tower)</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_campanile_result.png" alt="Campanile inpainted">
+    <div class="caption">Inpainted Campanile</div>
+  </div>
+</div>
+
+<p>
+  The model fills the top of the tower with a plausible structure that matches the lighting and
+  perspective of the original image, even though that region was completely resampled.
+</p>
+
+<h4>More Inpainting Examples</h4>
+
+<p>
+  Here I show three more masks on two different images. Each triplet shows the original image,
+  the binary mask, and the final inpainted result.
+</p>
+
+<h5>House – Circular Roof Mask</h5>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_house_original.png" alt="House original">
+    <div class="caption">Original house</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_house_circle_mask.png" alt="House circular mask">
+    <div class="caption">Circular roof mask</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_house_circle_result.png" alt="House circular inpaint">
+    <div class="caption">Inpainted house (circular)</div>
+  </div>
+</div>
+
+<h5>House – Diamond Roof Mask</h5>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_house_original.png" alt="House original">
+    <div class="caption">Original house</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_house_diamond_mask.png" alt="House diamond mask">
+    <div class="caption">Diamond-shaped roof mask</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_house_diamond_result.png" alt="House diamond inpaint">
+    <div class="caption">Inpainted house (diamond)</div>
+  </div>
+</div>
+
+<h5>Beach – Vertical Band Mask</h5>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/sedit_beach_original.png" alt="Beach original">
+    <div class="caption">Original beach</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_beach_vertical_mask.png" alt="Beach vertical mask">
+    <div class="caption">Vertical band mask</div>
+  </div>
+  <div class="img-col">
+    <img src="img/inpaint_beach_vertical_result.png" alt="Beach vertical inpaint">
+    <div class="caption">Inpainted beach (vertical band)</div>
+  </div>
+</div>
+
+
+<h3>1.7.3 Text-Conditioned Image-to-image Translation</h3>
+
+<p>
+  Here I repeat SDEdit but with more descriptive prompts. For the Campanile I use
+  "<code>a high quality photo of a tall clock tower on a university campus</code>".
+  For the coastal town and beach images I use prompts describing those scenes. Each row
+  shows SDEdit outputs for noise levels
+  <code>[1, 3, 5, 7, 10, 20]</code>.
+</p>
+
+<h4>Campanile (text-conditional)</h4>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i1.png" alt="Campanile text SDEdit i=1">
+    <div class="caption">i_start = 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i3.png" alt="Campanile text SDEdit i=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i5.png" alt="Campanile text SDEdit i=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i7.png" alt="Campanile text SDEdit i=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i10.png" alt="Campanile text SDEdit i=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_campanile_i20.png" alt="Campanile text SDEdit i=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<h4>Coastal Town (house image)</h4>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_house_i1.png" alt="House text SDEdit i=1">
+    <div class="caption">i_start = 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_house_i3.png" alt="House text SDEdit i=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_house_i5.png" alt="House text SDEdit i=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_house_i7.png" alt="House text SDEdit i=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_house_i10.png" alt="House text SDEdit i=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_house_i20.png" alt="House text SDEdit i=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+<h4>Beach Scene</h4>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i1.png" alt="Beach text SDEdit i=1">
+    <div class="caption">i_start = 1</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i3.png" alt="Beach text SDEdit i=3">
+    <div class="caption">i_start = 3</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i5.png" alt="Beach text SDEdit i=5">
+    <div class="caption">i_start = 5</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i7.png" alt="Beach text SDEdit i=7">
+    <div class="caption">i_start = 7</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i10.png" alt="Beach text SDEdit i=10">
+    <div class="caption">i_start = 10</div>
+  </div>
+  <div class="img-col">
+    <img src="img/txtsedit_beach_i20.png" alt="Beach text SDEdit i=20">
+    <div class="caption">i_start = 20</div>
+  </div>
+</div>
+
+
+<p>
+  For both the house and beach scenes, the text-conditional sampler preserves the overall layout
+  while nudging colors and textures to better match the descriptive prompt (“sunny beach with a
+  white hat and sandals”, “coastal town with white houses and red roofs”).
+</p>
+
+<h2>Part 1.8: Visual Anagrams</h2>
+
+<p>
+  In this part I implement <strong>visual anagrams</strong>: single images that look like one
+  subject when upright but reveal a different subject when flipped upside down. At each
+  denoising step I compute two guided noise estimates:
+</p>
+
+<p style="text-align:center;">
+  \(\epsilon_1 = \text{CFG}(\text{UNet}(x_t, t, p_1))\) <br>
+  \(\epsilon_2 = \text{flip}\big(\text{CFG}(\text{UNet}(\text{flip}(x_t), t, p_2))\big)\)
+</p>
+
+<p>
+  where \(p_1\) and \(p_2\) are two different prompts, and <code>flip</code> is a vertical flip.
+  I then average them:
+</p>
+
+<p style="text-align:center;">
+  \(\epsilon = (\epsilon_1 + \epsilon_2) / 2\),
+</p>
+
+<p>
+  and use \(\epsilon\) in the DDPM update. The same underlying latents are constrained to be
+  compatible with both prompts, but in opposite orientations.
+</p>
+
+<h4>Code: Visual Anagram Sampler</h4>
+
+<p>
+  The function below implements the dual-path denoising loop for visual anagrams. At each
+  timestep it runs the UNet on the current image with prompt \(p_1\), and on a vertically
+  flipped copy with prompt \(p_2\). The second noise estimate is flipped back and averaged with
+  the first before applying the DDPM update.
+</p>
+
+<pre><code>def visual_anagram(i_start,
+                 prompt_embeds_1,
+                 prompt_embeds_2,
+                 uncond_prompt_embeds,
+                 timesteps,
+                 scale=7,
+                 display=False):
+  """
+  Generate a visual anagram:
+    upright image matches prompt p1,
+    upside-down image matches prompt p2.
+  """
+
+  x = torch.randn(1, 3, 64, 64, device=device, dtype=torch.float16)
+
+  prompt_embeds_1 = prompt_embeds_1.to(device).half()
+  prompt_embeds_2 = prompt_embeds_2.to(device).half()
+  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
+
+  with torch.no_grad():
+      for i in range(i_start, len(timesteps) - 1):
+          t = timesteps[i]
+          t_prev = timesteps[i + 1]
+
+          # Noise schedule
+          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
+          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
+          alpha = alpha_bar_t / alpha_bar_prev
+          beta  = 1.0 - alpha
+
+          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
+          sqrt_one_minus_alpha_bar = torch.sqrt(1.0 - alpha_bar_t)
+
+          # Path 1: upright image, prompt p1
+          out1 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_1,
+                              return_dict=False)[0]
+          uncond1 = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
+                                 return_dict=False)[0]
+          eps_c1, pred_var = torch.split(out1, x.shape[1], dim=1)
+          eps_u1, _        = torch.split(uncond1, x.shape[1], dim=1)
+          eps1 = eps_u1 + scale * (eps_c1 - eps_u1)
+
+          # Path 2: flipped image, prompt p2
+          x_flip = torch.flip(x, dims=[2])  # flip vertically
+          out2 = stage_1.unet(x_flip, t, encoder_hidden_states=prompt_embeds_2,
+                              return_dict=False)[0]
+          uncond2 = stage_1.unet(x_flip, t, encoder_hidden_states=uncond_prompt_embeds,
+                                 return_dict=False)[0]
+          eps_c2, _ = torch.split(out2, x.shape[1], dim=1)
+          eps_u2, _ = torch.split(uncond2, x.shape[1], dim=1)
+          eps2 = eps_u2 + scale * (eps_c2 - eps_u2)
+          eps2 = torch.flip(eps2, dims=[2])  # flip noise back
+
+          # Average the two guided noises
+          eps = 0.5 * (eps1 + eps2)
+
+          # DDPM update x_t -> x_{t_prev}
+          x0_hat = (x - sqrt_one_minus_alpha_bar * eps) / sqrt_alpha_bar_t
+
+          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
+          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
+          mean = coef_x0 * x0_hat + coef_xt * x
+
+          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
+                                  dtype=stage_1.scheduler.timesteps.dtype)
+          x = add_variance(pred_var.to(torch.float32), t_tensor, mean.to(torch.float32))
+
+  return x.cpu().numpy()</code></pre>
+
+
+<h3>Old Man / Campfire Illusion</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/anagram_oldman_upright.png" alt="Anagram old man upright">
+    <div class="caption">Upright: "an oil painting of an old man"</div>
+  </div>
+  <div class="img-col">
+    <img src="img/anagram_oldman_flipped.png" alt="Anagram campfire flipped">
+    <div class="caption">Flipped: "an oil painting of people around a campfire"</div>
+  </div>
+</div>
+
+<p>
+  Upright, the image reads as a portrait of an older man with strong facial shadows. When flipped,
+  those shadows line up into a circle of figures and a glowing light source, resembling a campfire
+  scene.
+</p>
+
+<h3>Cat Drawing / Vine Skull Illusion</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/anagram_cat_upright.png" alt="Anagram cat upright">
+    <div class="caption">Upright: "a detailed pencil drawing of a cat"</div>
+  </div>
+  <div class="img-col">
+    <img src="img/anagram_cat_flipped.png" alt="Anagram skull flipped">
+    <div class="caption">Flipped: "a spooky human skull made of vines"</div>
+  </div>
+</div>
+
+<p>
+  In this illusion, the fur and whiskers of the upright cat become tangled vine structures and eye
+  sockets when flipped, forming the skull.
+</p>
+
+<h3>Castle / Cloud Dragon Illusion</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/anagram_castle_upright.png" alt="Anagram castle upright">
+    <div class="caption">Upright: "a fantasy castle on a hill at sunset"</div>
+  </div>
+  <div class="img-col">
+    <img src="img/anagram_castle_flipped.png" alt="Anagram cloud dragon flipped">
+    <div class="caption">Flipped: "a dragon's head made of clouds"</div>
+  </div>
+</div>
+
+<p>
+  Here the castle silhouette and clouds double as the jawline and horns of a dragon when viewed
+  upside down. In all three cases, the shared latent image must satisfy two different prompts at
+  once, which the CFG-based dual-path denoising makes possible.
+</p>
+
+<h2>Part 1.9: Hybrid Images with Factorized Diffusion</h2>
+
+<p>
+  Finally, I implement <strong>hybrid images</strong> using Factorized Diffusion. At each
+  timestep I compute two guided noise predictions:
+</p>
+
+<p style="text-align:center;">
+  \(\epsilon_1 = \text{CFG}(\text{UNet}(x_t, t, p_1)),\quad
+    \epsilon_2 = \text{CFG}(\text{UNet}(x_t, t, p_2))\).
+</p>
+
+<p>
+  I then take low frequencies from \(\epsilon_1\) and high frequencies from \(\epsilon_2\):
+</p>
+
+<p style="text-align:center;">
+  \(\epsilon = f_{\text{lowpass}}(\epsilon_1) + f_{\text{highpass}}(\epsilon_2),\)
+</p>
+
+<p>
+  where <code>f_lowpass</code> is implemented with a Gaussian blur (kernel size 33, σ = 2) and
+  <code>f_highpass(x) = x - f_lowpass(x)</code>. This composite noise drives the denoising
+  process so that the final image looks like prompt \(p_1\) when blurred or viewed from far away,
+  but like prompt \(p_2\) when viewed up close.
+</p>
+
+<h4>Code: Hybrid Image Sampler</h4>
+
+<p>
+  The <code>make_hybrids</code> function below combines low frequencies from one guided noise
+  estimate and high frequencies from another using a Gaussian blur in noise space. The resulting
+  composite noise is then used in the DDPM update at every timestep.
+</p>
+
+<pre><code>import torchvision.transforms.functional as TF
+
+def make_hybrids(i_start,
+               prompt_embeds_1,   # low-frequency prompt
+               prompt_embeds_2,   # high-frequency prompt
+               uncond_prompt_embeds,
+               timesteps,
+               scale=7,
+               display=False):
+  """
+  Hybrid sampling:
+    eps1 = CFG(UNet(x_t, t, p1))
+    eps2 = CFG(UNet(x_t, t, p2))
+    eps  = lowpass(eps1) + highpass(eps2)
+  """
+
+  device = next(stage_1.unet.parameters()).device
+  stage_1.scheduler.set_timesteps(timesteps=timesteps)
+
+  x = torch.randn(1, 3, 64, 64, device=device, dtype=torch.float16)
+
+  prompt_embeds_1 = prompt_embeds_1.to(device).half()
+  prompt_embeds_2 = prompt_embeds_2.to(device).half()
+  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
+
+  kernel_size = 33
+  sigma = 2.0
+
+  with torch.no_grad():
+      for i in range(i_start, len(timesteps) - 1):
+          t = timesteps[i]
+          t_prev = timesteps[i + 1]
+
+          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
+          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
+          alpha = alpha_bar_t / alpha_bar_prev
+          beta  = 1.0 - alpha
+
+          # Conditional and unconditional UNet passes
+          out1 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_1,
+                              return_dict=False)[0]
+          out2 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_2,
+                              return_dict=False)[0]
+          outu = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
+                              return_dict=False)[0]
+
+          eps1_raw, pred_var = torch.split(out1, x.shape[1], dim=1)
+          eps2_raw, _        = torch.split(out2, x.shape[1], dim=1)
+          eps_u, _           = torch.split(outu, x.shape[1], dim=1)
+
+          # CFG noises
+          eps1 = eps_u + scale * (eps1_raw - eps_u)
+          eps2 = eps_u + scale * (eps2_raw - eps_u)
+
+          # Frequency splitting in noise space
+          eps1_f = eps1.float()
+          eps2_f = eps2.float()
+
+          eps1_low = TF.gaussian_blur(eps1_f, kernel_size=kernel_size, sigma=sigma)
+          eps2_low = TF.gaussian_blur(eps2_f, kernel_size=kernel_size, sigma=sigma)
+          eps2_high = eps2_f - eps2_low
+
+          eps = eps1_low + eps2_high
+
+          # (Optional) renormalize hybrid noise to reasonable variance
+          target_std = (eps1_f.std() + eps2_f.std()) / 2.0
+          eps = eps - eps.mean()
+          eps = eps * (target_std / (eps.std() + 1e-6))
+          eps = eps.to(x.dtype)
+
+          # DDPM step
+          sqrt_alpha_bar_t   = torch.sqrt(alpha_bar_t)
+          sqrt_one_minus_abt = torch.sqrt(1.0 - alpha_bar_t)
+
+          x0_hat = (x - sqrt_one_minus_abt * eps) / sqrt_alpha_bar_t
+
+          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
+          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
+          mean = coef_x0 * x0_hat + coef_xt * x
+
+          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
+                                  dtype=stage_1.scheduler.timesteps.dtype)
+          x = add_variance(pred_var.to(torch.float32), t_tensor, mean.to(torch.float32))
+
+  return x.cpu().numpy()</code></pre>
+
+
+  <h3>Hybrid Image Results</h3>
+
+  <p>
+    Below are all of the hybrid images I generated using the factorized diffusion
+    sampler. In each case, the low frequencies come from a “soft” or blurry prompt
+    (background / global structure), while the high frequencies come from a detailed,
+    high-contrast prompt (edges and fine details).
+  </p>
+
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/hybrid_skull_waterfall.png" alt="Hybrid of stone skull and waterfall">
+      <div class="caption">
+        Hybrid 1 – Low frequencies: “a detailed photo of a waterfall in a lush green forest”;
+        High frequencies: “a large stone skull on a dark background”.
+      </div>
+    </div>
+    <div class="img-col">
+      <img src="img/hybrid_nebula_owl.png" alt="Hybrid of nebula galaxy and owl drawing">
+      <div class="caption">
+        Hybrid 2 – Low frequencies: “a colorful nebula galaxy with soft glowing clouds”;
+        High frequencies: “a detailed pencil drawing of an owl’s face”.
+      </div>
+    </div>
+  </div>
+
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/hybrid_sunset_city.png" alt="Hybrid of sunset and city skyline drawing">
+      <div class="caption">
+        Hybrid 3 – Low frequencies: “a soft blurry sunset over the ocean with warm colors”;
+        High frequencies: “a detailed black and white line drawing of a city skyline”.
+      </div>
+    </div>
+    <div class="img-col">
+      <img src="img/hybrid_face_skull.png" alt="Hybrid of portrait and skull drawing">
+      <div class="caption">
+        Hybrid 4 – Low frequencies: “a soft focus color portrait of a woman smiling”;
+        High frequencies: “a detailed black and white pencil drawing of a human skull”.
+      </div>
+    </div>
+  </div>
+
+
+<p>
+  At low spatial frequencies the image is dominated by smooth glowing nebula blobs, so it looks
+  like a colorful galaxy. At high spatial frequencies, the pencil-like lines that form the owl’s
+  eyes and feathers become visible. The hybrid effectively hides a sketch inside a soft
+  astronomical background.
+</p>
+
+<p>
+  Overall, visual anagrams and hybrid images highlight how flexible the diffusion framework is:
+  by manipulating the noise estimates at each step (e.g., flipping, frequency splitting), I can
+  steer the model to satisfy multiple competing constraints at different spatial scales or
+  orientations.
+</p>
+
+
+
+
 
 
 
