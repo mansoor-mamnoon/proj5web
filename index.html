@@ -20,172 +20,300 @@
   <p><strong>Name:</strong> Mansoor Mamnoon</p>
   <p><strong>Random Seed:</strong> 180</p>
 
+  <h3>Prompt Set Overview</h3>
+
+<p>
+  Across all parts of this project, I used a fixed set of text prompts to explore different
+  capabilities of diffusion-based image generation, including text-to-image synthesis,
+  image-to-image translation, visual anagrams, and hybrid images. All prompts were embedded
+  in advance and reused consistently throughout the experiments.
+</p>
+
+<h4>Part 0 – DeepFloyd IF: Text-to-Image Generation</h4>
+
+<p>
+  For the initial text-to-image experiments, I designed three creative prompts that combine
+  multiple visual concepts and styles. These prompts were chosen to test the model’s ability
+  to handle complex scenes, unusual object combinations, and detailed descriptive language.
+</p>
+
+<ul>
+  <li>
+    <strong>Mechanical Peacock:</strong>
+    “A giant mechanical peacock made of bronze gears and stained glass, opening its tail in the
+    middle of Times Square at night.”
+  </li>
+  <li>
+    <strong>Victorian Astronaut:</strong>
+    “A Victorian-era astronaut reading a book inside a candle-lit library on the moon.”
+  </li>
+  <li>
+    <strong>Gingerbread Cottage:</strong>
+    “A warm, cozy cottage made out of chocolate and gingerbread, with smoke shaped like cinnamon
+    rolls drifting from the chimney.”
+  </li>
+</ul>
+
+<h4>Baseline and Utility Prompts</h4>
+
+<p>
+  In addition to the creative prompts above, I repeatedly used a small set of baseline prompts
+  for unconditional or weakly conditioned generation. These prompts are listed explicitly
+  because they appear throughout multiple sections of the project.
+</p>
+
+<ul>
+  <li><strong>Generic photo prior:</strong> “a high quality photo”</li>
+  <li><strong>Unconditional prompt:</strong> empty string (<code>""</code>)</li>
+</ul>
+
+<h4>Part 1.7 – Image-to-Image Translation (SDEdit)</h4>
+
+<p>
+  For image-to-image translation, I experimented with both unconditional and text-conditioned
+  transformations. The unconditional projection experiments (Parts 1.7.0 and 1.7.1) use the
+  generic photo prior. The final text-conditioned transformations in Part 1.7.3 use the
+  following prompts:
+</p>
+
+<ul>
+  <li>
+    <strong>Campanile → Rocket Launch Tower:</strong>
+    “a futuristic rocket launch tower standing on an alien planet with purple sky”
+  </li>
+  <li>
+    <strong>Beach → Penguins:</strong>
+    “a snowy mountain landscape with penguins sliding down icy hills”
+  </li>
+  <li>
+    <strong>Coastal Town → Mushroom Village:</strong>
+    “a medieval village built entirely out of enormous glowing mushrooms”
+  </li>
+</ul>
+
+<h4>Part 1.8 – Visual Anagrams</h4>
+
+<p>
+  For the visual anagram experiments, I generated three illusion pairs, where each image can
+  be interpreted differently depending on the viewing direction. Each illusion is defined
+  by a pair of prompts:
+</p>
+
+<ul>
+  <li>
+    <strong>Illusion 1 (Canonical):</strong><br>
+    “an oil painting of an old man”<br>
+    “an oil painting of people around a campfire”
+  </li>
+  <li>
+    <strong>Illusion 2:</strong><br>
+    “a detailed pencil drawing of a cat”<br>
+    “a spooky human skull made of vines”
+  </li>
+  <li>
+    <strong>Illusion 3:</strong><br>
+    “a fantasy castle on a hill at sunset”<br>
+    “a dragon’s head made of clouds”
+  </li>
+</ul>
+
+<h4>Part 1.9 – Hybrid Images (Factorized Diffusion)</h4>
+
+<p>
+  For hybrid image generation, I combined pairs of prompts by taking low-frequency components
+  from one prompt and high-frequency components from another. The strongest hybrid pairs are
+  listed below:
+</p>
+
+<ul>
+  <li>
+    “a large stone skull on a dark background”<br>
+    “a detailed photo of a waterfall in a lush green forest”
+  </li>
+  <li>
+    “a colorful nebula galaxy with soft glowing clouds”<br>
+    “a detailed pencil drawing of an owl’s face”
+  </li>
+  <li>
+    “a soft blurry sunset over the ocean with warm colors”<br>
+    “a detailed black and white line drawing of a city skyline”
+  </li>
+  <li>
+    “a soft focus color portrait of a woman smiling”<br>
+    “a detailed black and white pencil drawing of a human skull”
+  </li>
+</ul>
+
+<p>
+  In total, this project uses 25 distinct prompts. This set is sufficient to justify precomputing
+  prompt embeddings and demonstrates a range of creative, structural, and semantic challenges
+  for diffusion-based models.
+</p>
+
+
   <h2>Part 0: Playing with DeepFloyd IF</h2>
 
   <p>
-    I used the DeepFloyd IF two-stage diffusion model via Hugging Face. I generated my own
-    prompt embeddings using the provided Hugging Face cluster, then loaded the resulting
-    <code>prompt_embeds_dict.pth</code> file into my environment. For all experiments below,
-    I fixed the random seed to <code>180</code> for reproducibility.
+    I used the DeepFloyd IF two-stage diffusion model through Hugging Face. Prompt embeddings
+    were generated in advance using the provided Hugging Face cluster and loaded locally from
+    <code>prompt_embeds_dict.pth</code>. For all experiments in this section, I fixed the random
+    seed to <code>180</code> to ensure reproducibility and isolate the effect of the diffusion
+    process itself.
   </p>
-
+  
   <h3>Prompts</h3>
   <ol>
-    <li>"A giant mechanical peacock made of bronze gears and stained glass, opening its tail in the middle of Times Square at night."</li>
-    <li>"A Victorian-era astronaut reading a book inside a candle-lit library on the moon."</li>
-    <li>"A warm, cozy cottage made out of chocolate and gingerbread, with smoke shaped like cinnamon rolls drifting from the chimney."</li>
+    <li>A giant mechanical peacock made of bronze gears and stained glass, opening its tail in the middle of Times Square at night.</li>
+    <li>A Victorian-era astronaut reading a book inside a candle-lit library on the moon.</li>
+    <li>A warm, cozy cottage made out of chocolate and gingerbread, with smoke shaped like cinnamon rolls drifting from the chimney.</li>
   </ol>
+  
+  <h3>Generated Images (Stage II, 256×256, 20 vs. 50 Steps)</h3>
 
-  <h3>Generated Images (Stage II, 256×256, 20 steps)</h3>
+  <h4> Random Seed: 180</h4>
+  
+
+
+  <p>
+    I first generated baseline images using <strong>20 denoising steps</strong> for all three prompts.
+    I then reran the same batch of prompts with <strong>50 denoising steps</strong>, keeping the seed,
+    prompt embeddings, and pipeline configuration fixed. This allows a direct comparison of image
+    quality as a function of <code>num_inference_steps</code>.
+  </p>
+  
   <div class="img-row">
     <div class="img-col">
-      <img src="img/peacock_20.png" alt="Mechanical peacock, 20 steps">
+      <img src="img/peacock_50steps.png">
+      <div class="caption">Prompt 1 – 50 denoising steps</div>
+    </div>
+    <div class="img-col">
+      <img src="img/astronaut_50.png">
+      <div class="caption">Prompt 2 – 50 denoising steps</div>
+    </div>
+    <div class="img-col">
+      <img src="img/cottage50.png">
+      <div class="caption">Prompt 3 – 50 denoising steps</div>
+    </div>
+  </div>
+  
+  <div class="img-row">
+    <div class="img-col">
+      <img src="img/peacock_20.png">
       <div class="caption">Prompt 1 – 20 denoising steps</div>
     </div>
     <div class="img-col">
-      <img src="img/astronaut_20.png" alt="Victorian-era astronaut, 20 steps">
+      <img src="img/astronaut_20.png">
       <div class="caption">Prompt 2 – 20 denoising steps</div>
     </div>
     <div class="img-col">
-      <img src="img/cottage_20.png" alt="Chocolate gingerbread cottage, 20 steps">
+      <img src="img/cottage_20.png">
       <div class="caption">Prompt 3 – 20 denoising steps</div>
     </div>
   </div>
-
-  <h3>Reflection on Image Quality and Alignment</h3>
-
-  <p><strong>Prompt 1 – Mechanical peacock in Times Square.</strong>
-    The model produces a very vibrant peacock with a stained-glass-like tail and metallic-looking body,
-    which matches the “mechanical” and “stained glass” parts of the prompt well. In the 256×256 image,
-    the background has bright lights and tall buildings that resemble Times Square at night.
-    The overall composition is coherent, but some of the gear details in the feathers are abstract
-    rather than clearly defined gears.
-  </p>
-
-  <p><strong>Prompt 2 – Victorian-era astronaut in a candle-lit library on the moon.</strong>
-    The image shows a figure in an old-fashioned uniform reading a large book in front of floor-to-ceiling shelves.
-    The warm directional light fits the “candle-lit” setting. A planet visible through the window
-    suggests a lunar location. The model captures the mood of a Victorian library well, but the “astronaut”
-    concept is stylized and does not look like a modern spacesuit.
-  </p>
-
-  <p><strong>Prompt 3 – Chocolate and gingerbread cottage with cinnamon-roll smoke.</strong>
-    The cottage clearly looks like a gingerbread house: the walls and roof have cookie and icing textures,
-    and there are candy-like decorations and trees. The scene feels warm and cozy despite the snow.
-    The smoke from the chimney has a slight spiral structure, but it does not perfectly form distinct
-    cinnamon-roll shapes. Overall, the model is strong at the “dessert house” concept, but struggles with
-    this very specific geometric detail.
-  </p>
-
-  <h3>Effect of <code>num_inference_steps</code> (Prompt 1)</h3>
-
-  <div class="img-row">
-    <div class="img-col">
-      <img src="img/peacock_10steps.png" alt="Peacock, 10 steps">
-      <div class="caption">Prompt 1 – 10 denoising steps</div>
-    </div>
-    <div class="img-col">
-      <img src="img/peacock_50steps.png" alt="Peacock, 50 steps">
-      <div class="caption">Prompt 1 – 50 denoising steps</div>
-    </div>
-  </div>
+  
+  <h3>Reflection on Image Quality and Denoising Steps</h3>
 
   <p>
-    For this comparison I fixed the seed to 180 and only changed <code>num_inference_steps</code>.
-    With <strong>10 steps</strong>, the global structure of the peacock is present, but the textures in the
-    feathers and background are blurrier and contain more small artifacts. With <strong>50 steps</strong>,
-    the same basic composition is preserved, but the feathers and stained-glass patterns are sharper and more
-    detailed, and the city lights look more stable. This matches the intuition that more denoising steps let
-    the diffusion process refine the image more thoroughly, trading extra compute time for better visual quality.
+    Comparing images generated with 20 and 50 denoising steps shows that increasing
+    <code>num_inference_steps</code> improves image quality and, in some cases, changes how well the
+    image matches the prompt. Since the random seed and prompts are fixed, these differences come
+    from running the diffusion process for more steps.
   </p>
+  
+  <p>
+    For the mechanical peacock and the gingerbread cottage, the overall scene looks similar at both
+    step counts, but the 50-step images are clearer. The peacock’s feathers and stained-glass patterns
+    are sharper, and the city lights are cleaner. The gingerbread cottage has more defined icing and
+    candy details at 50 steps, although the smoke still does not clearly form cinnamon-roll shapes.
+  </p>
+  
+  <p>
+    The astronaut prompt shows a bigger change. With 20 steps, the image looks like a medieval or
+    scholarly person reading in a library, with little visual evidence of space. With 50 steps, the
+    person clearly appears in an astronaut suit, and the background looks like the moon. This shows
+    that using more denoising steps can help the model better combine different ideas in a complex
+    prompt.
+  </p>
+  
+  <p>
+    Overall, more denoising steps usually make images sharper, and in harder prompts, they can also
+    improve how well the image matches the text. This comes at the cost of more computation time.
+  </p>
+  
+  
 
   <h2>Part 1.1: Forward Diffusion Process</h2>
 
-  <p>
-    In this section, I visualize the <strong>forward process</strong> of diffusion on a real image.
-    Starting from a clean 64×64 Campanile photo \(x_0\), I apply the forward noising equation
-    \(
-      x_t = \sqrt{\bar{\alpha}_t}\, x_0 + \sqrt{1 - \bar{\alpha}_t}\, \epsilon
-    \)
-    using the same \( \bar{\alpha}_t \) schedule as the DeepFloyd model. As the timestep
-    <code>t</code> increases, the contribution of the original image decreases and the contribution of
-    Gaussian noise increases.
-  </p>
+<p>
+  In this section, I visualize the <strong>forward process</strong> of diffusion on a real image.
+  Starting from a clean 64×64 Campanile photo \(x_0\), I apply the forward noising equation
+  \(
+    x_t = \sqrt{\bar{\alpha}_t}\, x_0 + \sqrt{1 - \bar{\alpha}_t}\, \epsilon
+  \)
+  using the same \( \bar{\alpha}_t \) schedule as the DeepFloyd model. As the timestep
+  <code>t</code> increases, the contribution of the original image decreases and the contribution of
+  Gaussian noise increases.
+</p>
 
-  <h3>Implementation: Forward Diffusion Function</h3>
+<h3>Implementation: Forward Diffusion Function</h3>
 
-  <p>
-    I implement the forward diffusion step
-    \(x_t = \sqrt{\bar{\alpha}_t}\,x_0 + \sqrt{1 - \bar{\alpha}_t}\,\epsilon\)
-    in a helper function <code>forward(im, t)</code>. Given a clean image
-    \(x_0\) and a timestep <code>t</code>, it looks up \(\bar{\alpha}_t\) from
-    the pretrained schedule <code>alphas_cumprod</code>, samples fresh Gaussian
-    noise \(\epsilon \sim \mathcal{N}(0, I)\), and returns the corresponding
-    noisy image \(x_t\).
-  </p>
+<p>
+  I implement the forward diffusion step
+  \(x_t = \sqrt{\bar{\alpha}_t}\,x_0 + \sqrt{1 - \bar{\alpha}_t}\,\epsilon\)
+  in a helper routine <code>forward(im, t)</code>. Given a clean image tensor \(x_0\) and an integer
+  timestep <code>t</code>, the routine:
+</p>
 
-  <pre><code>def forward(im, t):
-    """
-    Args:
-      im : torch tensor of size (1, 3, 64, 64) representing the clean image
-      t  : integer timestep
+<ul>
+  <li>Reads the cumulative noise schedule value \(\bar{\alpha}_t\) from the pretrained array <code>alphas_cumprod</code>.</li>
+  <li>Computes the scalar weights \(\sqrt{\bar{\alpha}_t}\) and \(\sqrt{1 - \bar{\alpha}_t}\).</li>
+  <li>Samples fresh Gaussian noise \(\epsilon \sim \mathcal{N}(0, I)\) with the same shape as the input image.</li>
+  <li>Forms the noisy image by taking a weighted combination of the clean image and the sampled noise according to the forward diffusion equation.</li>
+  <li>Runs without gradient tracking (inference-only), since this step is only used to generate visualizations.</li>
+</ul>
 
-    Returns:
-      im_noisy : torch tensor of size (1, 3, 64, 64) representing the noisy
-                 image at timestep t
-    """
-    with torch.no_grad():
-        # Look up cumulative product of alphas at timestep t
-        alpha_bar_t = alphas_cumprod[t].to(im.device)
-        sqrt_alpha_bar_t = alpha_bar_t.sqrt()
-        sqrt_one_minus_alpha_bar_t = (1.0 - alpha_bar_t).sqrt()
+<p>
+  The output is a tensor \(x_t\) with the same shape as the input image, representing the image after adding the
+  amount of noise prescribed by timestep <code>t</code>.
+</p>
 
-        # Sample Gaussian noise epsilon ~ N(0, I)
-        eps = torch.randn_like(im)
+<h3>Campanile at Different Noise Levels</h3>
 
-        # Forward diffusion equation: x_t = sqrt(a_bar_t) * x_0
-        #                            + sqrt(1 - a_bar_t) * eps
-        im_noisy = sqrt_alpha_bar_t * im + sqrt_one_minus_alpha_bar_t * eps
-
-    return im_noisy</code></pre>
-
-
-  <h3>Campanile at Different Noise Levels</h3>
-
-  <div class="img-row">
-    <div class="img-col">
-      <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
-      <div class="caption">Campanile, clean image (t = 0)</div>
-    </div>
-    <div class="img-col">
-      <img src="img/campanile_t250.png" alt="Noisy Campanile at t = 250">
-      <div class="caption">Campanile at t = 250</div>
-    </div>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_clean.png" alt="Clean Campanile image (t = 0)">
+    <div class="caption">Campanile, clean image (t = 0)</div>
   </div>
-
-  <div class="img-row">
-    <div class="img-col">
-      <img src="img/campanile_t500.png" alt="Noisy Campanile at t = 500">
-      <div class="caption">Campanile at t = 500</div>
-    </div>
-    <div class="img-col">
-      <img src="img/campanile_t750.png" alt="Noisy Campanile at t = 750">
-      <div class="caption">Campanile at t = 750</div>
-    </div>
+  <div class="img-col">
+    <img src="img/campanile_t250.png" alt="Noisy Campanile at t = 250">
+    <div class="caption">Campanile at t = 250</div>
   </div>
+</div>
 
-  <h3>Discussion</h3>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/campanile_t500.png" alt="Noisy Campanile at t = 500">
+    <div class="caption">Campanile at t = 500</div>
+  </div>
+  <div class="img-col">
+    <img src="img/campanile_t750.png" alt="Noisy Campanile at t = 750">
+    <div class="caption">Campanile at t = 750</div>
+  </div>
+</div>
 
-  <p>
-    At <strong>t = 0</strong>, the image is completely clean: we see a sharp Campanile with clear
-    edges and textures. At <strong>t = 250</strong>, there is noticeable grain, but the tower and
-    background are still clearly recognizable. By <strong>t = 500</strong>, the structure is much
-    harder to see: the noise dominates and only a faint outline of the tower remains. At
-    <strong>t = 750</strong>, the image is nearly pure noise, and most semantic content has been
-    destroyed. This matches the design of the diffusion forward process: as t increases, the signal
-    \(\sqrt{\bar{\alpha}_t} x_0\) shrinks, and the noise term \(\sqrt{1 - \bar{\alpha}_t} \epsilon\)
-    grows, providing a smooth path from a real image to pure Gaussian noise.
-  </p>
+<h3>Discussion</h3>
+
+<p>
+  At <strong>t = 0</strong>, the image is completely clean: we see a sharp Campanile with clear
+  edges and textures. At <strong>t = 250</strong>, there is noticeable grain, but the tower and
+  background are still clearly recognizable. By <strong>t = 500</strong>, the structure is much
+  harder to see: the noise dominates and only a faint outline of the tower remains. At
+  <strong>t = 750</strong>, the image is nearly pure noise, and most semantic content has been
+  destroyed. This matches the design of the diffusion forward process: as t increases, the signal
+  \(\sqrt{\bar{\alpha}_t} x_0\) shrinks, and the noise term \(\sqrt{1 - \bar{\alpha}_t} \epsilon\)
+  grows, providing a smooth path from a real image to pure Gaussian noise.
+</p>
+
 
   <h2>Part 1.2: Classical Gaussian Denoising</h2>
 
@@ -364,108 +492,70 @@
   \(t = 0\).
 </p>
 
-<pre><code>def add_variance(predicted_variance, t, image):
-  """
-  Args:
-    predicted_variance : (1, 3, 64, 64) tensor, last three channels of UNet output
-    t                  : tensor indicating timestep
-    image              : (1, 3, 64, 64) tensor, current image
+<p>
+  I implement this in two helper routines:
+</p>
 
-  Returns:
-    (1, 3, 64, 64) tensor, image with the correct amount of variance added
-  """
-  # Query the DDPM scheduler for the variance at timestep t
-  variance = stage_1.scheduler._get_variance(
-      t, predicted_variance=predicted_variance
-  )
-  variance_noise = torch.randn_like(image)
-  variance = torch.exp(0.5 * variance) * variance_noise
-  return image + variance
+<ul>
+  <li>
+    <code>add_variance(predicted_variance, t, image)</code> takes the UNet’s variance prediction for the current
+    timestep and asks the DDPM scheduler for the corresponding variance value. It then samples fresh Gaussian
+    noise with the same shape as the image, scales it according to the scheduler’s variance, and adds it to the
+    provided image. This matches the stochasticity used in DDPM sampling.
+  </li>
+  <li>
+    <code>iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display)</code> performs the full reverse
+    process starting from a noisy image at <code>timesteps[i_start]</code> and repeatedly stepping to the next
+    smaller timestep until reaching <code>t = 0</code>. The loop runs without gradient tracking since sampling is
+    inference-only.
+  </li>
+</ul>
 
+<p>
+  Inside the iterative denoising loop, each iteration follows the DDPM sampling structure:
+</p>
 
-def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True):
-  """
-  Perform iterative denoising from timestep timesteps[i_start] down to 0.
+<ul>
+  <li>
+    Select the current timestep <code>t</code> and the next timestep <code>t'</code> (the next element in the
+    strided schedule).
+  </li>
+  <li>
+    Look up the cumulative alpha products \(\bar{\alpha}_t\) and \(\bar{\alpha}_{t'}\) from
+    <code>alphas_cumprod</code>, and compute the corresponding per-step \(\alpha\) and \(\beta\) values that
+    relate these two timesteps.
+  </li>
+  <li>
+    Run the stage-1 DeepFloyd UNet conditioned on <code>prompt_embeds</code> to predict (1) the noise estimate
+    for the current image and (2) a learned variance representation. The UNet output is split into these two
+    components.
+  </li>
+  <li>
+    Use the predicted noise together with \(\bar{\alpha}_t\) to form an estimate \(\hat{x}_0\) of the original
+    clean image (the standard DDPM inversion formula).
+  </li>
+  <li>
+    Compute the DDPM mean for the previous timestep \(x_{t'}\) as a weighted combination of \(\hat{x}_0\) and
+    the current image \(x_t\), using the closed-form coefficients derived from the diffusion process.
+  </li>
+  <li>
+    Add the appropriate stochasticity by calling <code>add_variance</code> with the UNet’s learned variance term
+    for timestep <code>t</code>. This produces the sampled \(x_{t'}\).
+  </li>
+  <li>
+    Move tensors to the scheduler’s expected device/dtype for the variance computation, then move the result
+    back to the model’s device/dtype for the next UNet call.
+  </li>
+  <li>
+    If <code>display</code> is enabled, periodically print the step information and visualize the intermediate
+    image so the gradual denoising trajectory is observable.
+  </li>
+</ul>
 
-  Args:
-    im_noisy      : (1, 3, 64, 64) noisy image at timesteps[i_start]
-    i_start       : index into `timesteps` to start from
-    prompt_embeds : text embedding used to condition the UNet
-    timesteps     : list of integer timesteps, e.g. [990, 960, ..., 0]
-    display       : if True, show intermediate results every few steps
-
-  Returns:
-    clean : numpy array of shape (1, 3, 64, 64) in [-1, 1]
-  """
-  image = im_noisy  # x_t
-
-  with torch.no_grad():
-      for i in range(i_start, len(timesteps) - 1):
-          # 1) Move from timestep t to the next smaller timestep prev_t
-          t = timesteps[i]
-          prev_t = timesteps[i + 1]
-
-          # 2) Load alpha-bar values and compute alpha, beta
-          alpha_bar_t = alphas_cumprod[t].to(image.device).type_as(image)
-          alpha_bar_prev = alphas_cumprod[prev_t].to(image.device).type_as(image)
-
-          alpha = alpha_bar_t / alpha_bar_prev
-          beta = 1.0 - alpha
-
-          # 3) UNet predicts noise and variance at timestep t
-          model_output = stage_1.unet(
-              image,
-              t,
-              encoder_hidden_states=prompt_embeds,
-              return_dict=False
-          )[0]  # (1, 6, 64, 64)
-
-          noise_est, predicted_variance = torch.split(
-              model_output, image.shape[1], dim=1
-          )
-
-          # 4) Estimate x_0 from x_t and predicted noise
-          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
-          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
-
-          x0_hat = (image - sqrt_one_minus_alpha_bar_t * noise_est) / sqrt_alpha_bar_t
-
-          # 5) Compute DDPM mean for x_{t'}
-          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
-          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
-
-          pred_prev_image_mean = coef_x0 * x0_hat + coef_xt * image
-
-          # 6) Add learned variance on the scheduler's device
-          scheduler_device = stage_1.scheduler.timesteps.device
-          scheduler_dtype = stage_1.scheduler.timesteps.dtype
-
-          pred_prev_for_sched = pred_prev_image_mean.to(
-              scheduler_device, dtype=torch.float32
-          )
-          predicted_variance_for_sched = predicted_variance.to(
-              scheduler_device, dtype=torch.float32
-          )
-          t_tensor = torch.tensor([t], device=scheduler_device, dtype=scheduler_dtype)
-
-          pred_prev_with_var = add_variance(
-              predicted_variance_for_sched,
-              t_tensor,
-              pred_prev_for_sched,
-          )
-
-          # 7) Move back to model device and precision
-          image = pred_prev_with_var.to(im_noisy.device).type_as(im_noisy)
-
-          if display and ((i - i_start) % 5 == 0 or i == len(timesteps) - 2):
-              print(f"Denoising step {i - i_start}: t = {t} -> t' = {prev_t}")
-              img_vis = image[0].detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
-              media.show_image(img_vis)
-
-      clean = image.cpu().detach().numpy()
-
-  return clean</code></pre>
-
+<p>
+  The function returns the final denoised image at timestep <code>t = 0</code> as a numpy array (still in the
+  model’s normalized range).
+</p>
 
 <h3>Noisy Campanile at Selected Timesteps</h3>
 
@@ -559,8 +649,8 @@ def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True)
   images rather than relying on purely classical filtering.
 </p>
 
-
 <hr>
+
 
 <h2>Part 1.5: Diffusion Model Sampling</h2>
 
@@ -660,127 +750,76 @@ def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True)
 
 <p>
   For Classifier-Free Guidance (CFG), I run the UNet twice at each timestep:
-  once with the conditional prompt embedding \(\epsilon_c\) for
+  once with the conditional prompt embedding for
   "<code>a high quality photo</code>", and once with the unconditional embedding
-  \(\epsilon_u\) for the empty prompt. I combine them as
-  \(\epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)\) with
-  guidance scale \(\gamma = 7\), and then use this guided noise in the same
-  DDPM update rule as in Part&nbsp;1.4.
+  for the empty prompt. I then combine these two noise predictions using
+  \(\epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)\) with guidance
+  scale \(\gamma = 7\), and use the resulting guided noise in the same
+  DDPM-style update rule as in Part&nbsp;1.4.
 </p>
 
-<pre><code># Precomputed text embeddings
-prompt_embeds = prompt_embeds_dict["a high quality photo"]
-uncond_prompt_embeds = prompt_embeds_dict[""]
+<p>
+  Before sampling, I precompute and store the text embeddings for both the
+  conditional prompt ("<code>a high quality photo</code>") and the
+  unconditional empty prompt. These embeddings are reused at every timestep
+  to avoid recomputing text encodings inside the denoising loop.
+</p>
 
+<p>
+  The iterative CFG denoising procedure operates as follows:
+</p>
 
-def iterative_denoise_cfg(
-  im_noisy,
-  i_start,
-  prompt_embeds,
-  uncond_prompt_embeds,
-  timesteps,
-  scale=7,
-  display=True,
-):
-  """
-  Iterative denoising with Classifier-Free Guidance (CFG).
+<ul>
+  <li>
+    Initialize the process from a noisy image at the chosen starting timestep
+    in the strided schedule.
+  </li>
+  <li>
+    At each iteration, select the current timestep <code>t</code> and the next
+    smaller timestep <code>t'</code>.
+  </li>
+  <li>
+    Look up the cumulative noise coefficients \(\bar{\alpha}_t\) and
+    \(\bar{\alpha}_{t'}\), and compute the corresponding \(\alpha\) and
+    \(\beta\) values that define the DDPM transition between these timesteps.
+  </li>
+  <li>
+    Run the UNet once conditioned on the text prompt to obtain the conditional
+    noise prediction \(\epsilon_c\) and a learned variance term.
+  </li>
+  <li>
+    Run the same UNet a second time with the empty prompt to obtain the
+    unconditional noise prediction \(\epsilon_u\).
+  </li>
+  <li>
+    Combine the two noise estimates using the classifier-free guidance formula
+    \(\epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)\), which amplifies
+    the directions in noise space that are aligned with the text prompt.
+  </li>
+  <li>
+    Use the guided noise estimate to form an estimate \(\hat{x}_0\) of the clean
+    image from the current noisy image \(x_t\).
+  </li>
+  <li>
+    Compute the DDPM mean for the previous timestep \(x_{t'}\) as a weighted
+    combination of \(\hat{x}_0\) and \(x_t\).
+  </li>
+  <li>
+    Add the appropriate amount of stochasticity by injecting the scheduler’s
+    learned variance, ensuring the sampling process matches the model’s
+    training-time noise distribution.
+  </li>
+  <li>
+    Move tensors between the scheduler’s device and the model’s device as
+    needed, and optionally visualize intermediate results to monitor the
+    denoising trajectory.
+  </li>
+</ul>
 
-  Args:
-    im_noisy            : (1, 3, 64, 64) noisy image at timesteps[i_start]
-    i_start             : index into `timesteps` to start from
-    prompt_embeds       : conditional text embedding
-    uncond_prompt_embeds: unconditional (empty) text embedding
-    timesteps           : list of timesteps, e.g. [990, 960, ..., 0]
-    scale               : CFG guidance scale gamma
-    display             : if True, show intermediate images
-
-  Returns:
-    clean : numpy array of shape (1, 3, 64, 64) in [-1, 1]
-  """
-  image = im_noisy
-
-  with torch.no_grad():
-      for i in range(i_start, len(timesteps) - 1):
-          t = timesteps[i]
-          prev_t = timesteps[i + 1]
-
-          # 1) Load alpha-bar values and compute alpha, beta
-          alpha_bar_t = alphas_cumprod[t].to(image.device).type_as(image)
-          alpha_bar_prev = alphas_cumprod[prev_t].to(image.device).type_as(image)
-
-          alpha = alpha_bar_t / alpha_bar_prev
-          beta = 1.0 - alpha
-
-          # 2) Conditional UNet pass (with text)
-          model_output = stage_1.unet(
-              image,
-              t,
-              encoder_hidden_states=prompt_embeds,
-              return_dict=False
-          )[0]
-
-          # 3) Unconditional UNet pass (empty prompt)
-          uncond_output = stage_1.unet(
-              image,
-              t,
-              encoder_hidden_states=uncond_prompt_embeds,
-              return_dict=False
-          )[0]
-
-          # Split into noise and variance
-          noise_est, predicted_variance = torch.split(
-              model_output, image.shape[1], dim=1
-          )
-          uncond_noise_est, _ = torch.split(
-              uncond_output, image.shape[1], dim=1
-          )
-
-          # 4) Classifier-Free Guidance:
-          #    eps = eps_u + scale * (eps_c - eps_u)
-          guided_noise = uncond_noise_est + scale * (noise_est - uncond_noise_est)
-
-          # 5) Estimate x_0 from x_t and guided noise
-          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
-          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
-
-          x0_hat = (image - sqrt_one_minus_alpha_bar_t * guided_noise) / sqrt_alpha_bar_t
-
-          # 6) DDPM mean for x_{t'}
-          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
-          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
-
-          pred_prev_image_mean = coef_x0 * x0_hat + coef_xt * image
-
-          # 7) Add learned variance via scheduler
-          scheduler_device = stage_1.scheduler.timesteps.device
-          scheduler_dtype = stage_1.scheduler.timesteps.dtype
-
-          pred_prev_for_sched = pred_prev_image_mean.to(
-              scheduler_device, dtype=torch.float32
-          )
-          predicted_variance_for_sched = predicted_variance.to(
-              scheduler_device, dtype=torch.float32
-          )
-          t_tensor = torch.tensor([t], device=scheduler_device, dtype=scheduler_dtype)
-
-          pred_prev_with_var = add_variance(
-              predicted_variance_for_sched,
-              t_tensor,
-              pred_prev_for_sched,
-          )
-
-          # 8) Move back to model device / dtype
-          image = pred_prev_with_var.to(im_noisy.device).type_as(im_noisy)
-
-          if display and ((i - i_start) % 5 == 0 or i == len(timesteps) - 2):
-              print(f"[CFG] Denoising step {i - i_start}: t = {t} -> t' = {prev_t}")
-              img_vis = image[0].detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
-              media.show_image(img_vis)
-
-      clean = image.cpu().detach().numpy()
-
-  return clean</code></pre>
-
+<p>
+  The loop continues until reaching <code>t = 0</code>, at which point the final
+  output is a denoised image sample in the model’s normalized range.
+</p>
 
 <h3>CFG Samples for "a high quality photo"</h3>
 
@@ -814,8 +853,8 @@ def iterative_denoise_cfg(
 
 <p>
   All samples use the same random seed setup as earlier parts and are generated
-  by starting from pure Gaussian noise and running my
-  <code>iterative_denoise_cfg</code> loop with the prompt
+  by starting from pure Gaussian noise and running the
+  classifier-free guided iterative denoising procedure with the prompt
   "<code>a high quality photo</code>" and guidance scale \(\gamma = 7\).
   Compared to the unguided samples in Part 1.5, these images are noticeably
   more <strong>photorealistic</strong>: they look like well-lit portraits with
@@ -824,6 +863,7 @@ def iterative_denoise_cfg(
   images collapse toward a similar “high-quality portrait” style, which
   illustrates the usual tradeoff of CFG – higher fidelity but reduced variety.
 </p>
+
 
 
 <h2>Part 1.7: Image-to-image Translation (SDEdit)</h2>
@@ -973,7 +1013,7 @@ def iterative_denoise_cfg(
 
 <p>
   SDEdit is especially fun when I start from non-realistic inputs such as clipart and my own
-  sketches. Below I show one web image (a vector-style avocado) and two hand-drawn images that I
+  sketches. Below I show one web image (a vector-style cat) and two hand-drawn images that I
   drew in the Colab canvas, each projected to the natural image manifold at increasing noise
   levels.
 </p>
@@ -1104,81 +1144,70 @@ def iterative_denoise_cfg(
   model freely resynthesizes content inside the mask.
 </p>
 
-<h4>Code: Inpainting Function</h4>
+<h4>Implementation: Inpainting Function</h4>
 
 <p>
-  Below is the core PyTorch implementation of my <code>inpaint</code> function. It reuses the
-  CFG denoising loop from earlier parts, but at every iteration it overwrites the unmasked
-  region with a noised version of the original image so that only the masked pixels are edited.
+  The inpainting procedure reuses the classifier-free guided iterative denoising loop from the
+  previous section, with one crucial modification: at every diffusion step, pixels outside the
+  mask are forced to match the original image corrupted to the same noise level. This ensures
+  that only the masked region is edited, while the rest of the image remains faithful to the
+  original input.
 </p>
 
-<pre><code>def inpaint(original_image, mask, prompt_embeds, uncond_prompt_embeds,
-          timesteps, scale=7, display=False):
-  """
-  original_image : (1, 3, H, W) in [-1, 1]
-  mask           : (1, 3, H, W), 1 = editable region, 0 = keep original
-  prompt_embeds  : conditional text embedding
-  uncond_prompt_embeds : unconditional (empty) text embedding
-  timesteps      : diffusion schedule (e.g. strided_timesteps)
-  scale          : classifier-free guidance scale
-  """
+<p>
+  The inpainting routine operates as follows:
+</p>
 
-  # Work on GPU, keep original separate
-  original_image = original_image.to(device).float()
-  x = torch.randn_like(original_image, device=device, dtype=torch.float16)
+<ul>
+  <li>
+    Start from pure Gaussian noise with the same shape as the original image, which initializes
+    the editable region without any prior structure.
+  </li>
+  <li>
+    Move all inputs (original image, mask, and text embeddings) to the GPU and ensure they share
+    compatible data types for efficient inference.
+  </li>
+  <li>
+    Iterate over the diffusion timesteps from large to small, following the chosen (possibly
+    strided) schedule.
+  </li>
+  <li>
+    At the beginning of each timestep, overwrite the unmasked region with a forward-diffused
+    version of the original image at the current timestep. This enforces that pixels outside the
+    mask exactly track the original image’s noise trajectory.
+  </li>
+  <li>
+    Look up the cumulative noise coefficients \(\bar{\alpha}_t\) and \(\bar{\alpha}_{t'}\) for the
+    current and next timesteps, and compute the corresponding DDPM transition coefficients.
+  </li>
+  <li>
+    Run the UNet twice at the current timestep: once conditioned on the text prompt and once with
+    the empty prompt, producing conditional and unconditional noise estimates along with a
+    learned variance term.
+  </li>
+  <li>
+    Combine the two noise predictions using classifier-free guidance, amplifying the influence
+    of the text prompt within the masked region.
+  </li>
+  <li>
+    Use the guided noise estimate to compute an estimate \(\hat{x}_0\) of the clean image and
+    then form the DDPM mean for the previous timestep.
+  </li>
+  <li>
+    Add stochasticity using the scheduler’s learned variance, ensuring the reverse process
+    remains consistent with the model’s training-time distribution.
+  </li>
+  <li>
+    Carry the resulting image forward to the next timestep and repeat until reaching
+    \(t = 0\).
+  </li>
+</ul>
 
-  mask = mask.to(device).type_as(x)
-  prompt_embeds        = prompt_embeds.to(device).half()
-  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
-
-  with torch.no_grad():
-      for i in range(len(timesteps) - 1):
-          t = timesteps[i]
-          t_prev = timesteps[i + 1]
-
-          # 1) Force unmasked region to follow the original image at timestep t
-          noisy_orig = forward(original_image, t).to(device).type_as(x)
-          x = mask * x + (1.0 - mask) * noisy_orig
-
-          # 2) Compute noise schedule coefficients
-          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
-          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
-          alpha = alpha_bar_t / alpha_bar_prev
-          beta  = 1.0 - alpha
-
-          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
-          sqrt_one_minus_alpha_bar_t = torch.sqrt(1.0 - alpha_bar_t)
-
-          # 3) Conditional and unconditional UNet passes
-          cond_out = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds,
-                                  return_dict=False)[0]
-          uncond_out = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
-                                    return_dict=False)[0]
-
-          eps_c, pred_var = torch.split(cond_out, x.shape[1], dim=1)
-          eps_u, _        = torch.split(uncond_out, x.shape[1], dim=1)
-
-          # 4) Classifier-free guidance
-          eps = eps_u + scale * (eps_c - eps_u)
-
-          # 5) Estimate x0 and DDPM mean for the previous timestep
-          x0_hat = (x - sqrt_one_minus_alpha_bar_t * eps) / sqrt_alpha_bar_t
-
-          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
-          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
-          mean = coef_x0 * x0_hat + coef_xt * x
-
-          # 6) Add learned variance
-          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
-                                  dtype=stage_1.scheduler.timesteps.dtype)
-          mean_for_sched = mean.to(torch.float32)
-          var_for_sched  = pred_var.to(torch.float32)
-
-          x = add_variance(var_for_sched, t_tensor, mean_for_sched)
-          x = x.to(device).type_as(mask)
-
-  return x.cpu().numpy()</code></pre>
-
+<p>
+  The final output is an inpainted image where pixels outside the mask are preserved from the
+  original photo, and pixels inside the mask are newly synthesized in a way that is coherent
+  with both the surrounding context and the text prompt.
+</p>
 
 <h4>Campanile Inpainting</h4>
 
@@ -1256,6 +1285,7 @@ def iterative_denoise_cfg(
     <div class="caption">Inpainted beach (vertical band)</div>
   </div>
 </div>
+
 
 
 <!-- ============================= -->
@@ -1473,84 +1503,59 @@ def iterative_denoise_cfg(
   compatible with both prompts, but in opposite orientations.
 </p>
 
-<h4>Code: Visual Anagram Sampler</h4>
+<h4>Implementation: Visual Anagram Sampler</h4>
 
 <p>
-  The function below implements the dual-path denoising loop for visual anagrams. At each
-  timestep it runs the UNet on the current image with prompt \(p_1\), and on a vertically
-  flipped copy with prompt \(p_2\). The second noise estimate is flipped back and averaged with
-  the first before applying the DDPM update.
+  The visual anagram sampler is a modified classifier-free guided denoising loop that enforces
+  two different semantic interpretations on the same latent image. Instead of producing a
+  single guided noise estimate at each timestep, the sampler computes two guided predictions
+  corresponding to two prompts and two orientations of the image.
 </p>
 
-<pre><code>def visual_anagram(i_start,
-                 prompt_embeds_1,
-                 prompt_embeds_2,
-                 uncond_prompt_embeds,
-                 timesteps,
-                 scale=7,
-                 display=False):
-  """
-  Generate a visual anagram:
-    upright image matches prompt p1,
-    upside-down image matches prompt p2.
-  """
+<p>
+  The procedure works as follows:
+</p>
 
-  x = torch.randn(1, 3, 64, 64, device=device, dtype=torch.float16)
+<ul>
+  <li>
+    Initialize the latent image from pure Gaussian noise.
+  </li>
+  <li>
+    Move both prompt embeddings and the unconditional embedding to the GPU and ensure they share
+    the same precision as the latent image.
+  </li>
+  <li>
+    Iterate over the diffusion timesteps from large to small, following the chosen schedule.
+  </li>
+  <li>
+    For the first denoising path, run the UNet on the current (upright) latent image conditioned
+    on prompt \(p_1\), and also run an unconditional UNet pass. Combine these two predictions
+    using classifier-free guidance to obtain a guided noise estimate \(\epsilon_1\).
+  </li>
+  <li>
+    For the second denoising path, vertically flip the current latent image and run the UNet on
+    this flipped version conditioned on prompt \(p_2\), along with a corresponding unconditional
+    pass. Apply classifier-free guidance to obtain a second guided noise estimate, then flip this
+    noise field back to the original orientation to produce \(\epsilon_2\).
+  </li>
+  <li>
+    Average the two guided noise estimates, \(\epsilon_1\) and \(\epsilon_2\), to obtain a single
+    noise direction that is simultaneously compatible with both prompts.
+  </li>
+  <li>
+    Use this averaged noise estimate in the standard DDPM update rule to estimate the clean
+    image \(\hat{x}_0\), compute the mean of the previous timestep, and add the appropriate amount
+    of learned variance via the scheduler.
+  </li>
+  <li>
+    Repeat this process until reaching timestep \(t = 0\).
+  </li>
+</ul>
 
-  prompt_embeds_1 = prompt_embeds_1.to(device).half()
-  prompt_embeds_2 = prompt_embeds_2.to(device).half()
-  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
-
-  with torch.no_grad():
-      for i in range(i_start, len(timesteps) - 1):
-          t = timesteps[i]
-          t_prev = timesteps[i + 1]
-
-          # Noise schedule
-          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
-          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
-          alpha = alpha_bar_t / alpha_bar_prev
-          beta  = 1.0 - alpha
-
-          sqrt_alpha_bar_t = torch.sqrt(alpha_bar_t)
-          sqrt_one_minus_alpha_bar = torch.sqrt(1.0 - alpha_bar_t)
-
-          # Path 1: upright image, prompt p1
-          out1 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_1,
-                              return_dict=False)[0]
-          uncond1 = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
-                                 return_dict=False)[0]
-          eps_c1, pred_var = torch.split(out1, x.shape[1], dim=1)
-          eps_u1, _        = torch.split(uncond1, x.shape[1], dim=1)
-          eps1 = eps_u1 + scale * (eps_c1 - eps_u1)
-
-          # Path 2: flipped image, prompt p2
-          x_flip = torch.flip(x, dims=[2])  # flip vertically
-          out2 = stage_1.unet(x_flip, t, encoder_hidden_states=prompt_embeds_2,
-                              return_dict=False)[0]
-          uncond2 = stage_1.unet(x_flip, t, encoder_hidden_states=uncond_prompt_embeds,
-                                 return_dict=False)[0]
-          eps_c2, _ = torch.split(out2, x.shape[1], dim=1)
-          eps_u2, _ = torch.split(uncond2, x.shape[1], dim=1)
-          eps2 = eps_u2 + scale * (eps_c2 - eps_u2)
-          eps2 = torch.flip(eps2, dims=[2])  # flip noise back
-
-          # Average the two guided noises
-          eps = 0.5 * (eps1 + eps2)
-
-          # DDPM update x_t -> x_{t_prev}
-          x0_hat = (x - sqrt_one_minus_alpha_bar * eps) / sqrt_alpha_bar_t
-
-          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
-          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
-          mean = coef_x0 * x0_hat + coef_xt * x
-
-          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
-                                  dtype=stage_1.scheduler.timesteps.dtype)
-          x = add_variance(pred_var.to(torch.float32), t_tensor, mean.to(torch.float32))
-
-  return x.cpu().numpy()</code></pre>
-
+<p>
+  The final output is a single image whose latent representation has been shaped so that it
+  aligns with prompt \(p_1\) when viewed upright and with prompt \(p_2\) when viewed upside down.
+</p>
 
 <h3>Old Man / Campfire Illusion</h3>
 
@@ -1567,8 +1572,8 @@ def iterative_denoise_cfg(
 
 <p>
   Upright, the image reads as a portrait of an older man with strong facial shadows. When flipped,
-  those shadows line up into a circle of figures and a glowing light source, resembling a campfire
-  scene.
+  those same shadow structures reorganize into a ring of figures surrounding a bright central
+  glow, resembling a campfire scene.
 </p>
 
 <h3>Cat Drawing / Vine Skull Illusion</h3>
@@ -1585,8 +1590,8 @@ def iterative_denoise_cfg(
 </div>
 
 <p>
-  In this illusion, the fur and whiskers of the upright cat become tangled vine structures and eye
-  sockets when flipped, forming the skull.
+  In this illusion, fine details such as fur texture and whiskers in the upright cat transform
+  into vine-like strands and hollow eye sockets when flipped, forming the skull structure.
 </p>
 
 <h3>Castle / Cloud Dragon Illusion</h3>
@@ -1603,10 +1608,12 @@ def iterative_denoise_cfg(
 </div>
 
 <p>
-  Here the castle silhouette and clouds double as the jawline and horns of a dragon when viewed
-  upside down. In all three cases, the shared latent image must satisfy two different prompts at
-  once, which the CFG-based dual-path denoising makes possible.
+  Here the silhouette of the castle and surrounding clouds doubles as the jawline, horns, and
+  facial contours of a dragon when viewed upside down. In all three cases, the shared latent
+  image must satisfy two different prompts simultaneously, which is made possible by the
+  dual-path, CFG-based denoising process.
 </p>
+
 
 <h2>Part 1.9: Hybrid Images with Factorized Diffusion</h2>
 
@@ -1635,144 +1642,109 @@ def iterative_denoise_cfg(
   but like prompt \(p_2\) when viewed up close.
 </p>
 
-<h4>Code: Hybrid Image Sampler</h4>
+<h4>Implementation: Hybrid Image Sampler</h4>
 
 <p>
-  The <code>make_hybrids</code> function below combines low frequencies from one guided noise
-  estimate and high frequencies from another using a Gaussian blur in noise space. The resulting
-  composite noise is then used in the DDPM update at every timestep.
+  The hybrid image sampler extends classifier-free guided diffusion by factorizing the noise
+  prediction into low- and high-frequency components coming from two different text prompts.
+  Instead of committing to a single semantic interpretation at all spatial scales, the sampler
+  allows one prompt to control global structure while another controls fine details.
 </p>
 
-<pre><code>import torchvision.transforms.functional as TF
+<p>
+  The procedure operates as follows:
+</p>
 
-def make_hybrids(i_start,
-               prompt_embeds_1,   # low-frequency prompt
-               prompt_embeds_2,   # high-frequency prompt
-               uncond_prompt_embeds,
-               timesteps,
-               scale=7,
-               display=False):
-  """
-  Hybrid sampling:
-    eps1 = CFG(UNet(x_t, t, p1))
-    eps2 = CFG(UNet(x_t, t, p2))
-    eps  = lowpass(eps1) + highpass(eps2)
-  """
+<ul>
+  <li>
+    Initialize the latent image from pure Gaussian noise and configure the diffusion scheduler
+    with the desired timestep sequence.
+  </li>
+  <li>
+    Move both conditional prompt embeddings and the unconditional embedding to the GPU and ensure
+    they share the same precision as the latent image.
+  </li>
+  <li>
+    At each diffusion timestep, run the UNet three times on the current latent image:
+    once conditioned on the first prompt \(p_1\), once conditioned on the second prompt \(p_2\),
+    and once with the empty prompt to obtain the unconditional prediction.
+  </li>
+  <li>
+    Apply classifier-free guidance separately for each prompt, producing two guided noise
+    estimates \(\epsilon_1\) and \(\epsilon_2\) that emphasize their respective semantics.
+  </li>
+  <li>
+    Convert the guided noise estimates to floating-point precision suitable for filtering and
+    apply a Gaussian blur to extract the low-frequency component of \(\epsilon_1\).
+  </li>
+  <li>
+    Apply the same Gaussian blur to \(\epsilon_2\) and subtract it from \(\epsilon_2\) to obtain
+    the corresponding high-frequency component.
+  </li>
+  <li>
+    Combine these components by adding the low-frequency noise from prompt \(p_1\) to the
+    high-frequency noise from prompt \(p_2\), forming a single composite noise field.
+  </li>
+  <li>
+    Optionally renormalize the composite noise so that its variance remains comparable to the
+    original guided noises, preventing instability during sampling.
+  </li>
+  <li>
+    Use this hybrid noise estimate in the standard DDPM update rule to estimate the clean image,
+    compute the mean of the previous timestep, and add learned variance via the scheduler.
+  </li>
+  <li>
+    Repeat this process until reaching timestep \(t = 0\).
+  </li>
+</ul>
 
-  device = next(stage_1.unet.parameters()).device
-  stage_1.scheduler.set_timesteps(timesteps=timesteps)
+<p>
+  The final output is a hybrid image whose global appearance is dominated by prompt \(p_1\),
+  while its fine-scale edges and textures are dominated by prompt \(p_2\).
+</p>
 
-  x = torch.randn(1, 3, 64, 64, device=device, dtype=torch.float16)
+<h3>Hybrid Image Results</h3>
 
-  prompt_embeds_1 = prompt_embeds_1.to(device).half()
-  prompt_embeds_2 = prompt_embeds_2.to(device).half()
-  uncond_prompt_embeds = uncond_prompt_embeds.to(device).half()
+<p>
+  Below are all of the hybrid images I generated using the factorized diffusion
+  sampler. In each case, the low frequencies come from a “soft” or blurry prompt
+  (background / global structure), while the high frequencies come from a detailed,
+  high-contrast prompt (edges and fine details).
+</p>
 
-  kernel_size = 33
-  sigma = 2.0
-
-  with torch.no_grad():
-      for i in range(i_start, len(timesteps) - 1):
-          t = timesteps[i]
-          t_prev = timesteps[i + 1]
-
-          alpha_bar_t   = alphas_cumprod[t].to(device).type_as(x)
-          alpha_bar_prev = alphas_cumprod[t_prev].to(device).type_as(x)
-          alpha = alpha_bar_t / alpha_bar_prev
-          beta  = 1.0 - alpha
-
-          # Conditional and unconditional UNet passes
-          out1 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_1,
-                              return_dict=False)[0]
-          out2 = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds_2,
-                              return_dict=False)[0]
-          outu = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds,
-                              return_dict=False)[0]
-
-          eps1_raw, pred_var = torch.split(out1, x.shape[1], dim=1)
-          eps2_raw, _        = torch.split(out2, x.shape[1], dim=1)
-          eps_u, _           = torch.split(outu, x.shape[1], dim=1)
-
-          # CFG noises
-          eps1 = eps_u + scale * (eps1_raw - eps_u)
-          eps2 = eps_u + scale * (eps2_raw - eps_u)
-
-          # Frequency splitting in noise space
-          eps1_f = eps1.float()
-          eps2_f = eps2.float()
-
-          eps1_low = TF.gaussian_blur(eps1_f, kernel_size=kernel_size, sigma=sigma)
-          eps2_low = TF.gaussian_blur(eps2_f, kernel_size=kernel_size, sigma=sigma)
-          eps2_high = eps2_f - eps2_low
-
-          eps = eps1_low + eps2_high
-
-          # (Optional) renormalize hybrid noise to reasonable variance
-          target_std = (eps1_f.std() + eps2_f.std()) / 2.0
-          eps = eps - eps.mean()
-          eps = eps * (target_std / (eps.std() + 1e-6))
-          eps = eps.to(x.dtype)
-
-          # DDPM step
-          sqrt_alpha_bar_t   = torch.sqrt(alpha_bar_t)
-          sqrt_one_minus_abt = torch.sqrt(1.0 - alpha_bar_t)
-
-          x0_hat = (x - sqrt_one_minus_abt * eps) / sqrt_alpha_bar_t
-
-          coef_x0 = torch.sqrt(alpha_bar_prev) * beta / (1.0 - alpha_bar_t)
-          coef_xt = torch.sqrt(alpha) * (1.0 - alpha_bar_prev) / (1.0 - alpha_bar_t)
-          mean = coef_x0 * x0_hat + coef_xt * x
-
-          t_tensor = torch.tensor([t], device=stage_1.scheduler.timesteps.device,
-                                  dtype=stage_1.scheduler.timesteps.dtype)
-          x = add_variance(pred_var.to(torch.float32), t_tensor, mean.to(torch.float32))
-
-  return x.cpu().numpy()</code></pre>
-
-
-  <h3>Hybrid Image Results</h3>
-
-  <p>
-    Below are all of the hybrid images I generated using the factorized diffusion
-    sampler. In each case, the low frequencies come from a “soft” or blurry prompt
-    (background / global structure), while the high frequencies come from a detailed,
-    high-contrast prompt (edges and fine details).
-  </p>
-
-  <div class="img-row">
-    <div class="img-col">
-      <img src="img/hybrid_skull_waterfall.png" alt="Hybrid of stone skull and waterfall">
-      <div class="caption">
-        Hybrid 1 – Low frequencies: “a detailed photo of a waterfall in a lush green forest”;
-        High frequencies: “a large stone skull on a dark background”.
-      </div>
-    </div>
-    <div class="img-col">
-      <img src="img/hybrid_nebula_owl.png" alt="Hybrid of nebula galaxy and owl drawing">
-      <div class="caption">
-        Hybrid 2 – Low frequencies: “a colorful nebula galaxy with soft glowing clouds”;
-        High frequencies: “a detailed pencil drawing of an owl’s face”.
-      </div>
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/hybrid_skull_waterfall.png" alt="Hybrid of stone skull and waterfall">
+    <div class="caption">
+      Hybrid 1 – Low frequencies: “a detailed photo of a waterfall in a lush green forest”;
+      High frequencies: “a large stone skull on a dark background”.
     </div>
   </div>
-
-  <div class="img-row">
-    <div class="img-col">
-      <img src="img/hybrid_sunset_city.png" alt="Hybrid of sunset and city skyline drawing">
-      <div class="caption">
-        Hybrid 3 – Low frequencies: “a soft blurry sunset over the ocean with warm colors”;
-        High frequencies: “a detailed black and white line drawing of a city skyline”.
-      </div>
-    </div>
-    <div class="img-col">
-      <img src="img/hybrid_face_skull.png" alt="Hybrid of portrait and skull drawing">
-      <div class="caption">
-        Hybrid 4 – Low frequencies: “a soft focus color portrait of a woman smiling”;
-        High frequencies: “a detailed black and white pencil drawing of a human skull”.
-      </div>
+  <div class="img-col">
+    <img src="img/hybrid_nebula_owl.png" alt="Hybrid of nebula galaxy and owl drawing">
+    <div class="caption">
+      Hybrid 2 – Low frequencies: “a colorful nebula galaxy with soft glowing clouds”;
+      High frequencies: “a detailed pencil drawing of an owl’s face”.
     </div>
   </div>
+</div>
 
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/hybrid_sunset_city.png" alt="Hybrid of sunset and city skyline drawing">
+    <div class="caption">
+      Hybrid 3 – Low frequencies: “a soft blurry sunset over the ocean with warm colors”;
+      High frequencies: “a detailed black and white line drawing of a city skyline”.
+    </div>
+  </div>
+  <div class="img-col">
+    <img src="img/hybrid_face_skull.png" alt="Hybrid of portrait and skull drawing">
+    <div class="caption">
+      Hybrid 4 – Low frequencies: “a soft focus color portrait of a woman smiling”;
+      High frequencies: “a detailed black and white pencil drawing of a human skull”.
+    </div>
+  </div>
+</div>
 
 <p>
   At low spatial frequencies the image is dominated by smooth glowing nebula blobs, so it looks
@@ -1787,6 +1759,406 @@ def make_hybrids(i_start,
   steer the model to satisfy multiple competing constraints at different spatial scales or
   orientations.
 </p>
+
+
+
+<h2>Part 2: MNIST Denoising with an Unconditional UNet (Sections 1.2.1–1.2.3)</h2>
+
+<p>
+  In this part, I trained an <strong>unconditional UNet</strong> to act as a denoiser on MNIST.
+  The denoising objective is mean-squared error:
+  \[
+    \mathcal{L} = \mathbb{E}_{x,\epsilon}\left[\lVert D_\theta(z) - x \rVert_2^2\right],
+    \quad z = x + \sigma \epsilon,\ \epsilon \sim \mathcal{N}(0, I).
+  \]
+  During training, I sample fresh noise every time a batch is fetched so the network sees new noisy
+  inputs each epoch.
+</p>
+
+<h3>1.2: Visualizing the Noising Process</h3>
+<p>
+  I first verified the corruption process by taking a fixed MNIST digit and adding Gaussian noise
+  at multiple noise levels \(\sigma \in \{0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0\}\). As \(\sigma\) increases,
+  the digit becomes progressively harder to recognize.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/mnist_noising_sigmas1.png" alt="MNIST noising process across sigmas">
+    <div class="caption">Noising visualization across \(\sigma = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]\).</div>
+  </div>
+</div>
+
+<p><strong>Deliverable:</strong> Visualization of the noising process (above).</p>
+
+<hr>
+
+<h3>1.2.1 Training a Denoiser (\(\sigma = 0.5\))</h3>
+<p>
+  I trained the UNet with hidden dimension \(D=128\), batch size 256, Adam optimizer (lr \(=10^{-4}\)),
+  for 5 epochs. For each batch \(x\), I generated \(z = x + 0.5\epsilon\) with fresh \(\epsilon \sim \mathcal{N}(0,I)\),
+  and minimized \(\lVert D_\theta(z) - x\rVert_2^2\).
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/mnist_train_loss_sigma0p5.png" alt="Training loss curve sigma 0.5">
+    <div class="caption">Training loss curve for \(\sigma = 0.5\).</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/mnist_denoise_epoch1_sigma0p5.png" alt="Denoising after epoch 1 sigma 0.5">
+    <div class="caption">Test results after epoch 1 (Clean / Noisy / Denoised), \(\sigma=0.5\).</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/mnist_denoise_epoch5_sigma0p5.png" alt="Denoising after epoch 5 sigma 0.5">
+    <div class="caption">Test results after epoch 5 (Clean / Noisy / Denoised), \(\sigma=0.5\).</div>
+  </div>
+</div>
+
+<p><strong>Deliverables:</strong></p>
+<ul>
+  <li>Training loss curve plot over training for \(\sigma=0.5\) (above).</li>
+  <li>Sample denoising results after the 1st and 5th epoch (above).</li>
+</ul>
+
+<hr>
+
+<h3>1.2.2 Out-of-Distribution Testing</h3>
+<p>
+  After training on \(\sigma=0.5\), I evaluated the same trained model on a <em>fixed</em> test image
+  while varying \(\sigma \in [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]\). This checks whether a denoiser trained
+  at one noise level generalizes to unseen noise strengths.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/mnist_ood_grid.png" alt="OOD denoising grid across sigmas">
+    <div class="caption">OOD denoising results using the same test digit while varying \(\sigma\).</div>
+  </div>
+</div>
+
+<p><strong>Deliverable:</strong> Sample results on the test set with out-of-distribution noise levels (above).</p>
+
+<hr>
+
+<h3>1.2.3 Denoising Pure Noise (Generative Behavior)</h3>
+<p>
+  To make denoising behave like a generative task, I trained a denoiser that maps <em>pure noise</em>
+  \(z \sim \mathcal{N}(0, I)\) directly to a clean MNIST image \(x\). Concretely, I fed random noise into the
+  same UNet and trained it with MSE to predict a randomly sampled MNIST training digit.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/pure_noise_train_loss.png" alt="Pure noise training loss">
+    <div class="caption">Training loss curve for pure-noise-to-MNIST training.</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/pure_noise_epoch1_samples.png" alt="Pure noise samples after epoch 1">
+    <div class="caption">Samples after epoch 1 (Input noise / Output).</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/pure_noise_epoch5_samples.png" alt="Pure noise samples after epoch 5">
+    <div class="caption">Samples after epoch 5 (Input noise / Output).</div>
+  </div>
+</div>
+
+<p>
+  <strong>Observed pattern:</strong> the outputs tend to look like a <em>blurry “average digit”</em> rather than
+  crisp, diverse digits. This happens because with an MSE objective and an input \(z\) that contains no information
+  about which digit to output, the best the network can do is predict the <em>conditional mean</em> of the training
+  distribution. In other words, it collapses toward a centroid-like image that minimizes average squared error
+  across many possible targets (digits 0–9), producing a washed-out prototype.
+</p>
+
+
+<hr>
+
+<h2>Part 2: Training a Flow Matching Model (2.1–2.6)</h2>
+
+<p>
+  In Part 1, one-step denoising worked only when the noise level was not too large. In Part 2,
+  I implemented <strong>flow matching</strong>, which denoises iteratively by learning a vector field that
+  moves samples from pure noise toward the data distribution.
+</p>
+
+<p style="text-align:center;">
+  \[
+    x_t = (1-t)\,x_0 + t\,x_1,\qquad t\in[0,1]
+  \]
+  \[
+    u_t(x_t) = \frac{d x_t}{dt} = x_1 - x_0
+  \]
+</p>
+
+<p>
+  I trained a UNet \(u_\theta(x_t,t)\) (and later \(u_\theta(x_t,t,c)\)) to predict this flow using MSE.
+  At sampling time, I start from \(x_0 \sim \mathcal{N}(0,I)\) and apply Euler steps:
+</p>
+
+<p style="text-align:center;">
+  \[
+    x \leftarrow x + \frac{1}{T}\,u_\theta(x,t)
+  \]
+</p>
+
+<!-- ===================== -->
+<!-- 2.1 TIME CONDITIONING -->
+<!-- ===================== -->
+<h2>2.1 Adding Time Conditioning to the UNet</h2>
+
+<p>
+  To condition the UNet on the scalar timestep \(t\), I injected \(t\) using two fully-connected
+  blocks (FCBlocks). The timestep is normalized to \([0,1]\), passed through FCBlocks, and then
+  used to modulate intermediate UNet activations (following the assignment diagram). Concretely,
+  the first time embedding modulates the <code>unflatten</code> features, and the second time embedding
+  modulates the <code>up1</code> features.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part2_1_cond_unet_diagram.png" alt="Figure 4: Conditioned UNet diagram">
+    <div class="caption"><strong>Figure 4:</strong> Conditioned UNet architecture used for time conditioning.</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part2_1_fcblock_diagram.png" alt="Figure 5: FCBlock for conditioning">
+    <div class="caption"><strong>Figure 5:</strong> FCBlock used to embed conditioning signals (here \(t\)).</div>
+  </div>
+</div>
+
+<p>
+  Since \(t\) is a scalar, I treat it as a 1D input feature (\(F_{in}=1\)) to each FCBlock. The FCBlock output
+  is reshaped/broadcast to match the spatial feature map dimensions so it can modulate UNet activations by
+  elementwise multiplication at the specified locations.
+</p>
+
+<p><strong>Deliverable:</strong> None (implementation step for later training/sampling).</p>
+
+<!-- ================= -->
+<!-- 2.2 TRAIN (TIME)  -->
+<!-- ================= -->
+<h2>2.2 Training the Time-Conditioned UNet</h2>
+
+<p>
+  I trained a time-conditioned UNet on MNIST. For each batch \(x_1\), I sampled a random timestep
+  \(t \sim \mathcal{U}[0,1]\), constructed an interpolated noisy sample \(x_t\), and trained the model
+  to predict the flow \(u_t = x_1 - x_0\) using an MSE objective.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part2_2_time_unet_train_loss.png" alt="Time-conditioned UNet training loss">
+    <div class="caption">Time-conditioned UNet training loss (flow matching), full training trajectory.</div>
+  </div>
+</div>
+
+<p><strong>Deliverable:</strong> Training loss curve plot for the time-conditioned UNet (above).</p>
+
+<!-- ================= -->
+<!-- 2.3 SAMPLE (TIME) -->
+<!-- ================= -->
+<h2>2.3 Sampling from the Time-Conditioned UNet</h2>
+
+<p>
+  After training, I generated samples by starting from Gaussian noise and iteratively applying the learned
+  flow field using Euler integration with \(T\) steps. Over training epochs, samples become progressively more
+  legible.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part2_3_time_samples_epoch1.png" alt="Time-conditioned samples epoch 1">
+    <div class="caption">Time-conditioned samples after epoch 1.</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part2_3_time_samples_epoch5.png" alt="Time-conditioned samples epoch 5">
+    <div class="caption">Time-conditioned samples after epoch 5.</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part2_3_time_samples_epoch10.png" alt="Time-conditioned samples epoch 10">
+    <div class="caption">Time-conditioned samples after epoch 10.</div>
+  </div>
+</div>
+
+<p><strong>Deliverable:</strong> Sampling results for epochs 1, 5, and 10 (above).</p>
+
+<!-- ====================== -->
+<!-- 2.4 CLASS CONDITIONING -->
+<!-- ====================== -->
+<h2>2.4 Adding Class Conditioning to the UNet</h2>
+
+<p>
+  To improve sample quality and enable controlled generation, I added class conditioning \(c\) (digit label 0–9).
+  I represent \(c\) as a one-hot vector and inject it via additional FCBlocks. To support classifier-free guidance,
+  I apply class-conditioning dropout: with probability \(p_{\text{uncond}}=0.1\), I set the class vector to 0 so
+  the model also learns an unconditional score/flow.
+</p>
+
+<p><strong>Deliverable:</strong> None (implementation step for later training/sampling).</p>
+
+<!-- ===================== -->
+<!-- 2.5 TRAIN (CLASS-COND) -->
+<!-- ===================== -->
+<h2>2.5 Training the Class-Conditioned UNet</h2>
+
+<p>
+  Training is the same as the time-conditioned case, except the model also takes the class label \(c\).
+  During training I periodically generated <strong>unconditional</strong> samples (guidance scale \(=0\)) to confirm
+  that the model learned both conditional and unconditional behaviors due to conditioning dropout.
+</p>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part2_5_class_unet_train_loss.png" alt="Class-conditioned UNet training loss">
+    <div class="caption">Class-conditioned UNet training loss (flow matching), full training trajectory.</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/part2_5_uncond_epoch1.png" alt="Unconditional samples epoch 1">
+    <div class="caption">Unconditional samples (epoch 1).</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part2_5_uncond_epoch5.png" alt="Unconditional samples epoch 5">
+    <div class="caption">Unconditional samples (epoch 5).</div>
+  </div>
+  <div class="img-col">
+    <img src="img/part2_5_uncond_epoch10.png" alt="Unconditional samples epoch 10">
+    <div class="caption">Unconditional samples (epoch 10).</div>
+  </div>
+</div>
+
+<p><strong>Deliverable:</strong> Training loss curve plot for the class-conditioned UNet (above).</p>
+
+<h2>Part 2.6: Sampling from the Class-Conditioned UNet (Classifier-Free Guidance)</h2>
+
+<p>
+  <strong>Deliverable:</strong> Sampling results from the class-conditioned UNet for epochs
+  <strong>1, 5, and 10</strong>, generating <strong>4 instances of each digit (0–9)</strong>.
+  I use <strong>classifier-free guidance</strong> with guidance scale \(\gamma = 5.0\).
+</p>
+
+<p>
+  Following Algorithm B.4, I start from pure Gaussian noise \(x_0 \sim \mathcal{N}(0, I)\)
+  and iteratively update:
+</p>
+
+<p style="text-align:center;">
+  \[
+    u = u_{\text{uncond}} + \gamma (u_{\text{cond}} - u_{\text{uncond}}),
+    \qquad
+    x \leftarrow x + \frac{1}{T} u
+  \]
+</p>
+
+<p>
+  Here \(u_{\text{cond}} = u_\theta(x_t, t, c)\) uses the one-hot digit class \(c\), while
+  \(u_{\text{uncond}} = u_\theta(x_t, t, 0)\) drops the class conditioning (the “unconditional” path).
+  Increasing \(\gamma\) makes samples more strongly match the requested class, usually at the cost of diversity.
+</p>
+
+<hr>
+
+<h3>Sampling Results (With Exponential LR Scheduler)</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_sched_epoch1_grid.png" alt="Class-conditioned sampling epoch 1 with scheduler">
+    <div class="caption">Epoch 1 (with scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_sched_epoch5_grid.png" alt="Class-conditioned sampling epoch 5 with scheduler">
+    <div class="caption">Epoch 5 (with scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_sched_epoch10_grid.png" alt="Class-conditioned sampling epoch 10 with scheduler">
+    <div class="caption">Epoch 10 (with scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<p>
+  <strong>Observation:</strong> With the scheduler, class structure becomes recognizable very quickly.
+  By epoch 1, many digits are already legible, but there are still small artifacts and some strokes look noisy.
+  By epoch 5, digits become noticeably cleaner and more consistent within each class (e.g., 1s are thin and vertical,
+  0s are closed loops, 8s show two lobes). By epoch 10, most samples are sharp and strongly class-aligned.
+</p>
+
+<p>
+  In this run, the learning rate decays each epoch (e.g., from 0.01 down toward 0.001 by epoch 10),
+  which stabilizes late training and helps refine details rather than continuing to make large parameter updates.
+</p>
+
+<hr>
+
+<h3>Sampling Results (Without Scheduler)</h3>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_nosched_epoch1_grid.png" alt="Class-conditioned sampling epoch 1 without scheduler">
+    <div class="caption">Epoch 1 (no scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_nosched_epoch5_grid.png" alt="Class-conditioned sampling epoch 5 without scheduler">
+    <div class="caption">Epoch 5 (no scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<div class="img-row">
+  <div class="img-col">
+    <img src="img/classcond_nosched_epoch10_grid.png" alt="Class-conditioned sampling epoch 10 without scheduler">
+    <div class="caption">Epoch 10 (no scheduler), \(\gamma = 5.0\)</div>
+  </div>
+</div>
+
+<p>
+  <strong>Observation:</strong> Without the scheduler, the model still converges to strong samples.
+  From epoch 1 to epoch 5, digit shapes rapidly become readable and class-correct. From epoch 5 to epoch 10,
+  most improvements are incremental (cleaner edges, fewer speckles, more uniform stroke thickness).
+  Visually, the final quality is comparable to the scheduled run.
+</p>
+
+<hr>
+
+<h3>Removing the Scheduler: What I Changed and Why It Still Works</h3>
+
+<p>
+  The assignment asks to remove the exponential learning-rate scheduler while maintaining performance.
+  In my “no scheduler” run, I trained with the same optimizer (Adam) and kept a constant learning rate of
+  \(1\times10^{-2}\) for all 10 epochs. Empirically, this still converged well for MNIST because the task is
+  relatively simple and the class-conditioning signal makes optimization easier (the model does not have to
+  represent all digits with a single unconditional mode).
+</p>
+
+<p>
+  Comparing the two runs, the scheduler mainly helps by shrinking the learning rate late in training so updates
+  become more fine-grained. However, even without decay, the model reaches a similar fixed point by epoch 10.
+  The main “compensation” here is simply training long enough (10 epochs) with a stable optimizer (Adam) and
+  keeping the rest of the setup unchanged (same UNet capacity \(D=64\), same classifier-free guidance setup,
+  same timestep discretization \(T=300\), and the same class-dropout probability during training).
+</p>
+
 
 
 
