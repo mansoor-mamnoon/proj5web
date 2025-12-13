@@ -1789,6 +1789,16 @@
   </div>
 </div>
 
+<p>
+  <strong>Observation:</strong> As the noise level increases, the image transitions smoothly from a clean,
+  easily recognizable digit to near-pure Gaussian noise. At small \(\sigma\), the digit structure is largely
+  preserved with only mild pixel-level corruption. As \(\sigma\) grows, fine details are progressively destroyed,
+  and by \(\sigma = 1.0\) the input contains almost no visible information about the underlying digit.
+  This visualization confirms that the corruption process behaves as expected and produces a continuous
+  spectrum of difficulty for the denoising task.
+</p>
+
+
 <p><strong>Deliverable:</strong> Visualization of the noising process (above).</p>
 
 <hr>
@@ -1821,6 +1831,14 @@
   </div>
 </div>
 
+<p>
+  <strong>Observation:</strong> The training loss decreases steadily over epochs, indicating stable optimization.
+  After just one epoch, the denoiser already recovers the coarse digit structure, although outputs are blurry
+  and lack sharp edges. By epoch 5, the digits are significantly cleaner and closely resemble the ground-truth
+  MNIST images. This suggests that even a simple one-step denoising objective is effective when the noise level
+  matches the training distribution.
+</p>
+
 <p><strong>Deliverables:</strong></p>
 <ul>
   <li>Training loss curve plot over training for \(\sigma=0.5\) (above).</li>
@@ -1842,6 +1860,16 @@
     <div class="caption">OOD denoising results using the same test digit while varying \(\sigma\).</div>
   </div>
 </div>
+
+<p>
+  <strong>Observation:</strong> Despite being trained only at \(\sigma = 0.5\), the denoiser generalizes well
+  to unseen noise levels. For lower noise values, the model nearly perfectly reconstructs the digit.
+  As \(\sigma\) increases beyond the training value, the outputs gradually lose fine details and become blurrier,
+  but the overall digit identity remains recognizable even at very high noise levels.
+  This indicates that the learned denoising function is reasonably robust to moderate distribution shift
+  in noise magnitude.
+</p>
+
 
 <p><strong>Deliverable:</strong> Sample results on the test set with out-of-distribution noise levels (above).</p>
 
@@ -1963,6 +1991,14 @@
     <div class="caption">Time-conditioned UNet training loss (flow matching), full training trajectory.</div>
   </div>
 </div>
+<p>
+  <strong>Observation:</strong> The training loss decreases smoothly over time, suggesting that the
+  time-conditioned UNet successfully learns a consistent flow field across different timesteps.
+  Because the model is trained on randomly sampled \(t \in [0,1]\), it must learn to handle both
+  highly noisy inputs and nearly clean images within a single network, which this loss curve indicates
+  it can do reliably.
+</p>
+
 
 <p><strong>Deliverable:</strong> Training loss curve plot for the time-conditioned UNet (above).</p>
 
@@ -1991,6 +2027,15 @@
     <div class="caption">Time-conditioned samples after epoch 10.</div>
   </div>
 </div>
+
+<p>
+  <strong>Observation:</strong> Early in training, samples are highly noisy and fragmented, with only weak
+  hints of digit-like structure. As training progresses, coherent digit shapes begin to emerge.
+  By epoch 5, most samples are recognizable, though some remain blurry or incomplete.
+  By epoch 10, digits are substantially sharper and more consistent, demonstrating that iterative flow-based
+  denoising is capable of producing high-quality samples from pure noise.
+</p>
+
 
 <p><strong>Deliverable:</strong> Sampling results for epochs 1, 5, and 10 (above).</p>
 
@@ -2040,6 +2085,15 @@
     <div class="caption">Unconditional samples (epoch 10).</div>
   </div>
 </div>
+
+<p>
+  <strong>Observation:</strong> The training loss shows stable convergence similar to the time-only model.
+  The unconditional samples generated during training improve steadily, confirming that conditioning dropout
+  successfully teaches the model both conditional and unconditional behaviors.
+  This is critical for classifier-free guidance, since sampling relies on a meaningful unconditional prediction
+  as a reference.
+</p>
+
 
 <p><strong>Deliverable:</strong> Training loss curve plot for the class-conditioned UNet (above).</p>
 
